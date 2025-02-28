@@ -1,11 +1,16 @@
 import React from 'react';
+import { Route, Routes } from 'react-router-dom';
+import IndexPage from "./Pages/IndexPage"
+import Layout from './Components/Layout';
 
 function App() {
 
 	return (
-		<div className='bg-gray-500 h-screen flex justify-center items-center'>
-			Interview Experience
-		</div>
+		<Routes>
+			<Route path="/" element={<Layout />} >
+				<Route index element={<IndexPage />} />
+			</Route>
+		</Routes>
 	);
 }
 
