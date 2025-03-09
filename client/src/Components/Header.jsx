@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const Navbar = () => {
+const Header = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeItem, setActiveItem] = useState("Home");
 
@@ -14,14 +15,14 @@ const Navbar = () => {
 	};
 
 	return (
-		<nav className="bg-white shadow-md">
+		<nav className="bg-white shadow-md relative">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex h-16">
 					{/* Logo */}
 					<div className="flex-shrink-0 flex items-center">
-						<span className="text-xl font-bold text-black">
-							Interview Experience
-						</span>
+						<Link to={"/"} className="text-xl font-bold text-black">
+							InterviewInsights
+						</Link>
 					</div>
 
 					{/* Centered Desktop Navigation */}
@@ -87,18 +88,16 @@ const Navbar = () => {
 
 					{/* Login/Register Buttons (Desktop) */}
 					<div className="hidden md:flex items-center">
-						<a
-							href="#"
+						<Link to={"/login"}
 							className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black"
 						>
 							Login
-						</a>
-						<a
-							href="#"
+						</Link>
+						<Link to={"/register"}
 							className="ml-2 px-3 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
 						>
 							Register
-						</a>
+						</Link>
 					</div>
 
 					{/* Mobile menu button */}
@@ -116,7 +115,7 @@ const Navbar = () => {
 
 			{/* Mobile menu */}
 			{isOpen && (
-				<div className="md:hidden">
+				<div className="md:hidden absolute w-full bg-white shadow-lg z-50">
 					<div className="pt-2 pb-3 space-y-1">
 						<a
 							href="#"
@@ -177,20 +176,18 @@ const Navbar = () => {
 					<div className="pt-4 pb-3 border-t border-gray-200">
 						<div className="flex items-center px-4">
 							<div className="flex-shrink-0">
-								<a
-									href="#"
+								<Link to={"/login"}
 									className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black"
 								>
 									Login
-								</a>
+								</Link>
 							</div>
 							<div className="ml-3">
-								<a
-									href="#"
+								<Link to={"register"}
 									className="block px-3 py-2 text-base font-medium text-white bg-black rounded-md hover:bg-gray-800"
 								>
 									Register
-								</a>
+								</Link>
 							</div>
 						</div>
 					</div>
@@ -200,4 +197,4 @@ const Navbar = () => {
 	);
 };
 
-export default Navbar;
+export default Header;
