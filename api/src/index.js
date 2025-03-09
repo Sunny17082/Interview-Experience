@@ -4,8 +4,8 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const morgan = require("morgan");
-const mongoose = require("mongoose");
 const connectDB = require("./db/connection");
+const userRouter = require("./routes/user.route")
 
 const port = process.env.PORT || 3000;
 
@@ -21,6 +21,8 @@ connectDB();
 app.get("/", (req, res) => {
     res.send("Interview Experience API");
 });
+
+app.use("/api/user", userRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
