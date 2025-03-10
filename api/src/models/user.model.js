@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        unique: true
+        // unique: true
     },
     password: {
         type: String,
@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "user",
         enum: ["user", "admin"],
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
     },
     profileImg: {
         type: String,
