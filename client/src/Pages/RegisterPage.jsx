@@ -2,6 +2,8 @@ import axios from "axios";
 import React, { useState } from "react";
 import { FaGoogle } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+
 
 function RegisterPage() {
 	const [email, setEmail] = useState("");
@@ -14,14 +16,14 @@ function RegisterPage() {
 		setErrors({});
 		try {
 			const response = await axios.post(
-				"/user/register",
+				"/user/auth/register",
 				{ email, name, password },
 				{
 					headers: { "Content-Type": "application/json" },
 				}
 			);
-			if (response.status === 200) {
-				alert("Registration successful!");
+			if (response.status === 201) {
+				toast.success("Registration successful! Please verify your email.");
 			}
 		} catch (err) {
 			if (err.response && err.response.data && err.response.data.errors) {
@@ -32,7 +34,7 @@ function RegisterPage() {
 				setErrors(formattedErrors);
 			} else {
 				console.log(err.message);
-				alert("Registration failed!");
+				toast.error("An error occurred. Please try again later.");
 			}
 		}
 	}
@@ -115,7 +117,7 @@ function RegisterPage() {
 					<div>
 						<button
 							type="submit"
-							className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+							className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm cursor-pointer text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
 						>
 							Register
 						</button>

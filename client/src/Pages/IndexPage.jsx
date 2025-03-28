@@ -8,6 +8,7 @@ import {
 	FileText,
 	BookOpen,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const IndexPage = () => {
 	const [searchQuery, setSearchQuery] = useState("");
@@ -96,12 +97,12 @@ const IndexPage = () => {
 									</p>
 
 									<div className="flex items-center justify-center">
-										<button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-all transform hover:scale-105 hover:shadow-lg">
+										<Link to={"/experience/new"} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-all transform hover:scale-105 hover:shadow-lg">
 											{/* <PlusCircle className="h-5 w-5" /> */}
 											<span>
 												Share Interview Experience
 											</span>
-										</button>
+										</Link>
 									</div>
 								</div>
 

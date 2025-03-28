@@ -2,27 +2,30 @@ import React, { useContext, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { FaGoogle } from "react-icons/fa";
 import axios from "axios";
+import { UserContext } from "../UserContext";
+import { toast } from "react-toastify";
 
 function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [redirect, setRedirect] = useState(false);
 	const [errors, setErrors] = useState({});
+	const { user, setUser } = useContext(UserContext);
 
 	async function login(ev) {
 		ev.preventDefault();
 		try {
 			const response = await axios.post(
-				"/user/login",
+				"/user/auth/login",
 				{ email, password },
 				{
 					headers: { "Content-Type": "application/json" },
 				}
 			);
 			if (response.status === 200) {
-				setUserInfo(response.data);
+				setUser(response.data.userData);
+				toast.success("Login successful!");
 				setRedirect(true);
-				alert("Login successful!");
 			}
 		} catch (err) {
 			if (err.response && err.response.data) {
@@ -30,7 +33,8 @@ function LoginPage() {
 				formattedErrors[err.response.data.path] = err.response.data.msg;
 				setErrors(formattedErrors);
 			}
-			console.log(err.response.data);
+			toast.error("Login failed!");
+			console.log(err.message);
 		}
 	}
 
@@ -101,7 +105,7 @@ function LoginPage() {
 					<div>
 						<button
 							type="submit"
-							className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+							className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm cursor-pointer text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
 						>
 							Sign in
 						</button>

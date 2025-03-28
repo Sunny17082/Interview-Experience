@@ -1,10 +1,39 @@
-import React, { useState } from "react";
+import React, { use, useContext, useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { UserContext } from "../UserContext";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Header = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeItem, setActiveItem] = useState("Home");
+	const { user, setUser } = useContext(UserContext);
+
+	useEffect(() => { 
+		handleGetUser();
+	}, []);
+
+	
+	const handleGetUser = async () => {
+		const response = await axios.get("/user/auth/getUser", {
+			withCredentials: true,
+		})
+		if (response.status === 200) {
+			setUser(response.data.user);
+			console.log(response.data.user);
+		}
+	}
+
+	const handleLogout = async () => {
+		const response = await axios.post("/user/auth/logout", {
+			withCredentials: true,
+		})
+		if (response.status === 200) {
+			setUser(null);
+			toast.success("Logged out successfully");
+		}
+	}
 
 	const toggleMenu = () => {
 		setIsOpen(!isOpen);
@@ -87,18 +116,36 @@ const Header = () => {
 					</div>
 
 					{/* Login/Register Buttons (Desktop) */}
-					<div className="hidden md:flex items-center">
-						<Link to={"/login"}
-							className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black"
-						>
-							Login
-						</Link>
-						<Link to={"/register"}
-							className="ml-2 px-3 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
-						>
-							Register
-						</Link>
-					</div>
+					{!user && (
+						<div className="hidden md:flex items-center">
+							<Link
+								to={"/login"}
+								className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black"
+							>
+								Login
+							</Link>
+							<Link
+								to={"/register"}
+								className="ml-2 px-3 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
+							>
+								Register
+							</Link>
+						</div>
+					)}
+
+					{user && (
+						<div className="hidden md:flex items-center">
+							<Link className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black">
+								{user.name}
+							</Link>
+							<Link
+								onClick={handleLogout}
+								className="ml-2 px-3 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
+							>
+								Logout
+							</Link>
+						</div>
+					)}
 
 					{/* Mobile menu button */}
 					<div className="flex items-center ml-auto md:hidden">
@@ -174,22 +221,45 @@ const Header = () => {
 						</a>
 					</div>
 					<div className="pt-4 pb-3 border-t border-gray-200">
-						<div className="flex items-center px-4">
-							<div className="flex-shrink-0">
-								<Link to={"/login"}
-									className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black"
-								>
-									Login
-								</Link>
+						{!user && (
+							<div className="flex items-center px-4">
+								<div className="flex-shrink-0">
+									<Link
+										to={"/login"}
+										className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black"
+									>
+										Login
+									</Link>
+								</div>
+								<div className="ml-3">
+									<Link
+										to={"register"}
+										className="block px-3 py-2 text-base font-medium text-white bg-black rounded-md hover:bg-gray-800"
+									>
+										Register
+									</Link>
+								</div>
 							</div>
-							<div className="ml-3">
-								<Link to={"register"}
-									className="block px-3 py-2 text-base font-medium text-white bg-black rounded-md hover:bg-gray-800"
-								>
-									Register
-								</Link>
+						)}
+						{user && (
+							<div className="flex items-center px-4">
+								<div className="flex-shrink-0">
+									<Link
+										className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black"
+									>
+										{user.name}
+									</Link>
+								</div>
+								<div className="ml-3">
+									<Link
+										onClick={handleLogout}
+										className="block px-3 py-2 text-base font-medium text-white bg-black rounded-md hover:bg-gray-800"
+									>
+										Logout
+									</Link>
+								</div>
 							</div>
-						</div>
+						)}
 					</div>
 				</div>
 			)}
