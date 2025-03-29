@@ -6,7 +6,8 @@ const cors = require("cors");
 const morgan = require("morgan");
 const connectDB = require("./db/connection");
 const cookieParser = require("cookie-parser");
-const userRouter = require("./routes/user.route")
+const userRouter = require("./routes/user.route");
+const experienceRouter = require("./routes/experience.route");
 
 const port = process.env.PORT || 3000;
 
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/user", userRouter);
+app.use("/api/experience", experienceRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 const ExperienceForm = () => {
 	const [interviewStatus, setInterviewStatus] = useState("");
@@ -7,7 +8,7 @@ const ExperienceForm = () => {
 	const [name, setName] = useState("");
 	const [challengesEncountered, setChallengesEncountered] = useState("");
 	const [overallFeedback, setOverallFeedback] = useState("");
-  	const [packageOffered, setPackageOffered] = useState(0);
+	const [packageOffered, setPackageOffered] = useState(0);
 	const [rounds, setRounds] = useState([
 		{
 			number: 1,
@@ -109,20 +110,20 @@ const ExperienceForm = () => {
 
 	const getDifficultyLabel = (difficulty) => {
 		switch (true) {
-			case difficulty <= 2:
+			case difficulty == 1:
 				return "Easy";
-			case difficulty <= 4:
+			case difficulty == 2:
 				return "Easy-Medium";
-			case difficulty <= 6:
+			case difficulty == 3:
 				return "Medium";
-			case difficulty <= 8:
+			case difficulty == 4:
 				return "Medium-Hard";
 			default:
 				return "Hard";
 		}
 	};
 
-	const handleSubmit = (e) => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
 		const isValid =
 			companyName.trim() !== "" &&
@@ -135,17 +136,32 @@ const ExperienceForm = () => {
 			);
 
 		if (isValid) {
-			const submissionData = {
-				companyName,
-				role,
-				interviewStatus,
-				overallFeedback,
-				packageOffered,
-				rounds,
-			};
-
-			console.log("Form Data:", submissionData);
-			setFormSubmitted(true);
+			try {
+				const res = await axios.post(
+					"/experience",
+					{
+						name,
+						companyName,
+						role,
+						interviewStatus,
+						packageOffered,
+						challengesEncountered,
+						overallFeedback,
+						rounds,
+					},
+					{
+						headers: {
+							"Content-Type": "application/json",
+						},
+						withCredentials: true,
+					}
+				);
+				if(res.status === 201) {
+					setFormSubmitted(true);
+				}
+			} catch (err) {
+				console.error(err);
+			}
 		} else {
 			alert("Please fill in all required fields.");
 		}
@@ -153,19 +169,21 @@ const ExperienceForm = () => {
 
 	if (formSubmitted) {
 		return (
-			<div className="max-w-md mx-auto p-4 sm:p-6 bg-white shadow-md rounded-lg text-center">
-				<h2 className="text-xl sm:text-2xl font-bold text-green-600 mb-4">
-					Interview Experience Submitted!
-				</h2>
-				<p className="text-gray-700 mb-4">
-					Thank you for sharing your interview experience.
-				</p>
-				<button
-					onClick={() => setFormSubmitted(false)}
-					className="w-full px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
-				>
-					Add Another Experience
-				</button>
+			<div className="flex items-center justify-center h-screen">
+				<div className="max-w-md mx-auto p-4 sm:p-6 bg-white shadow-md rounded-lg text-center">
+					<h2 className="text-xl sm:text-2xl font-bold text-green-600 mb-4">
+						Interview Experience Submitted!
+					</h2>
+					<p className="text-gray-700 mb-4">
+						Thank you for sharing your interview experience.
+					</p>
+					<button
+						onClick={() => setFormSubmitted(false)}
+						className="w-full px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
+					>
+						Add Another Experience
+					</button>
+				</div>
 			</div>
 		);
 	}
@@ -245,7 +263,7 @@ const ExperienceForm = () => {
 				</div>
 				<div>
 					<label className="block text-gray-700 mb-2">
-						Package Offered *
+						Package Offered (only in LPA) *
 					</label>
 					<input
 						type="number"
@@ -402,7 +420,7 @@ const ExperienceForm = () => {
 										<input
 											type="range"
 											min="1"
-											max="10"
+											max="5"
 											value={question.codingDifficulty}
 											onChange={(e) =>
 												updateQuestion(

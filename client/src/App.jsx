@@ -8,6 +8,8 @@ import ExperienceForm from "./Pages/ExperienceForm";
 import axios from "axios";
 import { User } from "lucide-react";
 import { UserContextProvider } from "./UserContext";
+import ExperiencesPage from "./Pages/ExperiencesPage";
+import ExperiencePage from "./Pages/ExperiencePage";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.withCredentials = true;
@@ -20,10 +22,9 @@ function App() {
 					<Route index element={<IndexPage />} />
 					<Route path={"/login"} element={<LoginPage />} />
 					<Route path={"/register"} element={<RegisterPage />} />
-					<Route
-						path={"/experience/new"}
-						element={<ExperienceForm />}
-					/>
+					<Route path={"/experience"} element={<ExperiencesPage />} />
+					<Route path={"/experience/new"} element={<ExperienceForm />} />
+					<Route path={"/experience/:id"} element={<ExperiencePage />} />
 				</Route>
 			</Routes>
 		</UserContextProvider>

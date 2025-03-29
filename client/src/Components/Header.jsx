@@ -10,30 +10,33 @@ const Header = () => {
 	const [activeItem, setActiveItem] = useState("Home");
 	const { user, setUser } = useContext(UserContext);
 
-	useEffect(() => { 
+	useEffect(() => {
 		handleGetUser();
 	}, []);
 
-	
 	const handleGetUser = async () => {
-		const response = await axios.get("/user/auth/getUser", {
-			withCredentials: true,
-		})
-		if (response.status === 200) {
-			setUser(response.data.user);
-			console.log(response.data.user);
+		try {
+			const response = await axios.get("/user/auth/getUser", {
+				withCredentials: true,
+			});
+			if (response.status === 200) {
+				setUser(response.data.user);
+				console.log(response.data.user);
+			}
+		} catch (err) {
+			console.error("Error fetching user data:", err.message);
 		}
-	}
+	};
 
 	const handleLogout = async () => {
 		const response = await axios.post("/user/auth/logout", {
 			withCredentials: true,
-		})
+		});
 		if (response.status === 200) {
 			setUser(null);
 			toast.success("Logged out successfully");
 		}
-	}
+	};
 
 	const toggleMenu = () => {
 		setIsOpen(!isOpen);
@@ -49,7 +52,11 @@ const Header = () => {
 				<div className="flex h-16">
 					{/* Logo */}
 					<div className="flex-shrink-0 flex items-center">
-						<Link to={"/"} className="text-xl font-bold text-black">
+						<Link
+							to={"/"}
+							className="text-xl font-bold text-black"
+							onClick={() => handleItemClick("Home")}
+						>
 							InterviewInsights
 						</Link>
 					</div>
@@ -57,8 +64,8 @@ const Header = () => {
 					{/* Centered Desktop Navigation */}
 					<div className="hidden md:flex flex-1 justify-center items-center">
 						<div className="flex space-x-8">
-							<a
-								href="#"
+							<Link
+								to={"/"}
 								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
 									activeItem === "Home"
 										? "border-b-2 border-black text-gray-900"
@@ -67,7 +74,7 @@ const Header = () => {
 								onClick={() => handleItemClick("Home")}
 							>
 								Home
-							</a>
+							</Link>
 							<a
 								href="#"
 								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
@@ -101,17 +108,17 @@ const Header = () => {
 							>
 								Resources
 							</a>
-							<a
-								href="#"
+							<Link
+								to={"/experience"}
 								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
-									activeItem === "Job board"
+									activeItem === "Experience"
 										? "border-b-2 border-black text-gray-900"
 										: "text-gray-500 hover:text-gray-900"
 								}`}
-								onClick={() => handleItemClick("Job board")}
+								onClick={() => handleItemClick("Experience")}
 							>
-								Job board
-							</a>
+								Experience
+							</Link>
 						</div>
 					</div>
 
@@ -211,13 +218,13 @@ const Header = () => {
 						<a
 							href="#"
 							className={`block pl-3 pr-4 py-2 text-base font-medium ${
-								activeItem === "Job board"
+								activeItem === "Experience"
 									? "bg-gray-100 border-l-4 border-black text-gray-900"
 									: "border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-900"
 							}`}
-							onClick={() => handleItemClick("Job board")}
+							onClick={() => handleItemClick("Experience")}
 						>
-							Job board
+							Experience
 						</a>
 					</div>
 					<div className="pt-4 pb-3 border-t border-gray-200">
@@ -244,9 +251,7 @@ const Header = () => {
 						{user && (
 							<div className="flex items-center px-4">
 								<div className="flex-shrink-0">
-									<Link
-										className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black"
-									>
+									<Link className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black">
 										{user.name}
 									</Link>
 								</div>

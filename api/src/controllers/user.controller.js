@@ -70,17 +70,22 @@ const handleLogin = async (req, res) => {
 					.json({ success: false, message: "Wrong password" });
 			} else {
 				const token = jwt.sign(
-					{ email, name: userDoc.name, role: userDoc.role },
+					{ id: userDoc._id, email, name: userDoc.name, role: userDoc.role },
 					jwtSecret,
 					{},
 					(err, token) => {
-						res.cookie("token", token);
+						res.cookie("token", token, {
+							httpOnly: true,
+							maxAge: 7 * 24 * 60 * 60 * 1000,
+							sameSite: "strict",	
+						});
 						return res
 							.status(200)
 							.json({
 								success: true,
 								message: "Login successful",
 								userData: {
+									id: userDoc.id,
 									name: userDoc.name,
 									email: userDoc.email,
 									role: userDoc.role,
