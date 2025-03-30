@@ -24,7 +24,7 @@ function LoginPage() {
 			);
 			if (response.status === 200) {
 				setUser(response.data.userData);
-				toast.success("Login successful!");
+				toast.success("Login successful!"); 
 				setRedirect(true);
 			}
 		} catch (err) {
@@ -41,7 +41,7 @@ function LoginPage() {
 	function handleGoogleSignIn() {
 		window.location.href = `${
 			import.meta.env.VITE_API_BASE_URL
-		}/user/google`;
+		}/user/auth/google`;
 	}
 
 	if (redirect) {

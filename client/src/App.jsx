@@ -6,7 +6,6 @@ import LoginPage from "./Pages/LoginPage";
 import RegisterPage from "./Pages/RegisterPage";
 import ExperienceForm from "./Pages/ExperienceForm";
 import axios from "axios";
-import { User } from "lucide-react";
 import { UserContextProvider } from "./UserContext";
 import ExperiencesPage from "./Pages/ExperiencesPage";
 import ExperiencePage from "./Pages/ExperiencePage";

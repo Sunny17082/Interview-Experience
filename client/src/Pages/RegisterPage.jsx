@@ -42,7 +42,7 @@ function RegisterPage() {
 	function handleGoogleSignUp() {
 		window.location.href = `${
 			import.meta.env.VITE_API_BASE_URL
-		}/user/google`;
+		}/user/auth/google`;
 	}
 
 	return (
