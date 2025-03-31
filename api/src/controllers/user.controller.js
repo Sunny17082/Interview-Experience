@@ -5,8 +5,72 @@ const sendMail = require("../utils/mailingService");
 const jwtSecret = process.env.JWT_SECRET;
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const { body, validationResult } = require("express-validator");
+
+const TRUSTED_DOMAINS = [
+	"gmail.com",
+	"outlook.com",
+	"hotmail.com",
+	"yahoo.com",
+	"ticollege.org"
+];
+
+// Validation middleware
+const registerValidation = [
+	// Name validation
+	body("name")
+		.notEmpty()
+		.withMessage("Name is required")
+		.isLength({ min: 2 })
+		.withMessage("Name must be at least 2 characters")
+		.trim(),
+
+	// Email validation
+	body("email")
+		.notEmpty()
+		.withMessage("Email is required")
+		.isEmail()
+		.withMessage("Please provide a valid email")
+		.custom((value) => {
+			// Extract domain from email
+			const domain = value.split("@")[1].toLowerCase();
+
+			// Check if domain is in trusted domains list
+			if (!TRUSTED_DOMAINS.includes(domain)) {
+				throw new Error(
+					"Email domain not allowed. Please use an email from a trusted domain."
+				);
+			}
+
+			return true;
+		})
+		.normalizeEmail(),
+
+	// Password validation
+	body("password")
+		.notEmpty()
+		.withMessage("Password is required")
+		.isLength({ min: 8 })
+		.withMessage("Password must be at least 8 characters")
+		.matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/)
+		.withMessage(
+			"Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+		),
+];
 
 const handleRegister = async (req, res) => {
+	await Promise.all(
+		registerValidation.map((validation) => validation.run(req))
+	);
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		return res.status(400).json({
+			success: false,
+			message: "Validation failed",
+			errors: errors.array(),
+		});
+	}
+
 	const { name, email, password } = req.body;
 	try {
 		const userDoc = await User.findOne({ email });
@@ -53,6 +117,7 @@ const handleLogin = async (req, res) => {
 				.status(400)
 				.json({
 					success: false,
+					path: "email",
 					message: "Email and password are required",
 				});
 		}
@@ -60,7 +125,7 @@ const handleLogin = async (req, res) => {
 		if (!userDoc) {
 			return res
 				.status(404)
-				.json({ success: false, message: "User not found" });
+				.json({ success: false, path: "email", message: "User not found" });
 		} else {
 			const isPasswordValid = bcrypt.compareSync(
 				password,
@@ -69,7 +134,7 @@ const handleLogin = async (req, res) => {
 			if (!isPasswordValid) {
 				return res
 					.status(401)
-					.json({ success: false, message: "Wrong password" });
+					.json({ success: false, path: "password", message: "Wrong password" });
 			} else {
 				const token = jwt.sign(
 					{ id: userDoc._id, email, name: userDoc.name, role: userDoc.role },
@@ -157,6 +222,7 @@ passport.use(
 
 const handleGoogleLogin = passport.authenticate("google", {
 	scope: ["profile", "email"],
+	prompt: "select_account",
 });
 
 const handleGoogleCallback = (req, res, next) => {

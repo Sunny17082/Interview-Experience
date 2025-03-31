@@ -30,7 +30,7 @@ function LoginPage() {
 		} catch (err) {
 			if (err.response && err.response.data) {
 				const formattedErrors = {};
-				formattedErrors[err.response.data.path] = err.response.data.msg;
+				formattedErrors[err.response.data.path] = err.response.data.message;
 				setErrors(formattedErrors);
 			}
 			toast.error("Login failed!");
@@ -134,7 +134,7 @@ function LoginPage() {
 					<div className="mt-6">
 						<button
 							onClick={handleGoogleSignIn}
-							className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-800 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+							className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm cursor-pointer font-medium text-gray-800 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
 						>
 							<FaGoogle className="mr-2" />
 							Sign in with Google

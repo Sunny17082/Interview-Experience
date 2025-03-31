@@ -6,8 +6,12 @@ import { toast } from "react-toastify";
 const ExperiencePage = () => {
 	const { id } = useParams();
 	const [experience, setExperience] = useState(null);
-	const [expandedRounds, setExpandedRounds] = useState([]); // Track expanded state for all rounds
-	const [isHelpful, setIsHelpful] = useState(false); // Track helpful button state
+	const [expandedRounds, setExpandedRounds] = useState([]);
+	const [isHelpful, setIsHelpful] = useState(false);
+	const [summary, setSummary] = useState("");
+	const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+	const [questionAnswers, setQuestionAnswers] = useState({});
+	const [loadingAnswers, setLoadingAnswers] = useState({});
 
 	useEffect(() => {
 		getExperienceById();
@@ -21,9 +25,7 @@ const ExperiencePage = () => {
 			if (response.status === 200) {
 				console.log(response.data.experienceDoc);
 				setExperience(response.data.experienceDoc);
-				// Set all rounds as expanded by default if rounds exist
 				if (response.data.experienceDoc?.rounds?.length > 0) {
-					// Create an array of true values with the same length as rounds array
 					setExpandedRounds(
 						Array(response.data.experienceDoc.rounds.length).fill(
 							true
@@ -33,10 +35,10 @@ const ExperiencePage = () => {
 			}
 		} catch (err) {
 			console.error("Error fetching experience data:", err);
+			toast.error("Failed to load interview experience");
 		}
 	};
 
-	// Helper function to get status color
 	const getStatusColor = (status) => {
 		switch (status?.toLowerCase()) {
 			case "offered":
@@ -50,7 +52,6 @@ const ExperiencePage = () => {
 		}
 	};
 
-	// Helper function to get status text color
 	const getStatusTextColor = (status) => {
 		switch (status?.toLowerCase()) {
 			case "offered":
@@ -64,12 +65,10 @@ const ExperiencePage = () => {
 		}
 	};
 
-	// Helper function to count coding questions in a round
 	const countCodingQuestions = (questions) => {
 		return questions.filter((q) => q.isCodingQuestion).length;
 	};
 
-	// Helper function to get difficulty bar
 	const DifficultyBar = ({ level }) => {
 		return (
 			<div className="flex items-center space-x-1">
@@ -85,7 +84,6 @@ const ExperiencePage = () => {
 		);
 	};
 
-	// Format date
 	const formatDate = (dateString) => {
 		const date = new Date(dateString);
 		return date.toLocaleDateString("en-US", {
@@ -95,23 +93,91 @@ const ExperiencePage = () => {
 		});
 	};
 
-	// Handle reporting
 	const handleReport = () => {
-		// Implementation for report functionality would go here
-		toast.success("report submitted successfully. our team will review it.");
+		toast.success(
+			"Report submitted successfully. Our team will review it."
+		);
 	};
 
-	// Handle helpful button click
 	const handleHelpfulClick = () => {
 		setIsHelpful(!isHelpful);
 		// Here you could also implement an API call to track helpful votes
 	};
 
-	// Toggle expanded state for a specific round
 	const toggleRoundExpanded = (roundIndex) => {
 		const newExpandedState = [...expandedRounds];
 		newExpandedState[roundIndex] = !newExpandedState[roundIndex];
 		setExpandedRounds(newExpandedState);
+	};
+
+	// New function to generate summary
+	const generateSummary = async () => {
+		if (!experience) return;
+
+		setIsLoadingSummary(true);
+		try {
+			const response = await axios.post(
+				"/ai/summary",
+				{
+					experienceData: experience,
+				},
+				{
+					withCredentials: true,
+				}
+			);
+
+			if (response.status === 200) {
+				setSummary(response.data.summary);
+			}
+		} catch (err) {
+			console.error("Error generating summary:", err);
+			toast.error("Failed to generate summary");
+		} finally {
+			setIsLoadingSummary(false);
+		}
+	};
+
+	// New function to get answer for a specific question
+	const getQuestionAnswer = async (roundIndex, questionIndex) => {
+		if (!experience) return;
+
+		const round = experience.rounds[roundIndex];
+		const question = round.questions[questionIndex];
+		const questionId = `${roundIndex}-${questionIndex}`;
+
+		// Set loading state for this specific question
+		setLoadingAnswers((prev) => ({
+			...prev,
+			[questionId]: true,
+		}));
+
+		try {
+			const response = await axios.post(
+				"/ai/answer",
+				{
+					questionData: question,
+					topic: question.topic,
+				},
+				{
+					withCredentials: true,
+				}
+			);
+
+			if (response.status === 200) {
+				setQuestionAnswers((prev) => ({
+					...prev,
+					[questionId]: response.data.answer,
+				}));
+			}
+		} catch (err) {
+			console.error("Error getting question answer:", err);
+			toast.error("Failed to generate answer");
+		} finally {
+			setLoadingAnswers((prev) => ({
+				...prev,
+				[questionId]: false,
+			}));
+		}
 	};
 
 	return (
@@ -209,6 +275,77 @@ const ExperiencePage = () => {
 				</div>
 			</div>
 
+			{/* AI Summary Section */}
+			<div className="mb-8 bg-gray-50 p-6 rounded-lg shadow-sm">
+				<div className="flex justify-between items-center mb-4">
+					<h2 className="text-2xl font-bold text-gray-900">
+						AI-Generated Summary
+					</h2>
+					{!summary && (
+						<button
+							onClick={generateSummary}
+							disabled={isLoadingSummary}
+							className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							{isLoadingSummary ? (
+								<>
+									<svg
+										className="animate-spin h-4 w-4 text-white"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+									>
+										<circle
+											className="opacity-25"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											strokeWidth="4"
+										></circle>
+										<path
+											className="opacity-75"
+											fill="currentColor"
+											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+										></path>
+									</svg>
+									<span>Generating...</span>
+								</>
+							) : (
+								<>
+									<svg
+										className="w-4 h-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+										xmlns="http://www.w3.org/2000/svg"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth="2"
+											d="M13 10V3L4 14h7v7l9-11h-7z"
+										></path>
+									</svg>
+									<span>Generate Summary</span>
+								</>
+							)}
+						</button>
+					)}
+				</div>
+				{summary ? (
+					<div className="prose max-w-none">
+						<div className="whitespace-pre-wrap">{summary}</div>
+					</div>
+				) : (
+					<div className="text-gray-500 italic">
+						{isLoadingSummary
+							? "Generating summary..."
+							: "Click the button to generate an AI summary of this interview experience."}
+					</div>
+				)}
+			</div>
+
 			{/* Interview Rounds */}
 			<h2 className="text-2xl font-bold text-gray-900 mb-4">
 				Interview Rounds
@@ -267,42 +404,158 @@ const ExperiencePage = () => {
 							</div>
 							{isExpanded && (
 								<div className="p-6">
-									<div className="space-y-4">
+									<div className="space-y-6">
 										{round.questions.map(
-											(question, questionIndex) => (
-												<div
-													key={questionIndex}
-													className="p-4 bg-gray-50 rounded-md"
-												>
-													<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
-														<div className="mb-2 sm:mb-0">
-															<span className="bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">
-																{question.topic}
-															</span>
-															{question.isCodingQuestion && (
-																<span className="bg-gray-800 text-white text-xs font-medium ml-2 px-2.5 py-0.5 rounded">
-																	Coding
-																</span>
-															)}
-														</div>
-														{question.isCodingQuestion && (
-															<div className="flex items-center">
-																<span className="text-xs text-gray-500 mr-2">
-																	Difficulty:
-																</span>
-																<DifficultyBar
-																	level={
-																		question.codingDifficulty
+											(question, questionIndex) => {
+												const questionId = `${roundIndex}-${questionIndex}`;
+												const hasAnswer =
+													questionAnswers[questionId];
+												const isLoading =
+													loadingAnswers[questionId];
+
+												return (
+													<div
+														key={questionIndex}
+														className="bg-gray-50 rounded-md overflow-hidden"
+													>
+														<div className="p-4">
+															<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
+																<div className="mb-2 sm:mb-0">
+																	<span className="bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">
+																		{
+																			question.topic
+																		}
+																	</span>
+																	{question.isCodingQuestion && (
+																		<span className="bg-gray-800 text-white text-xs font-medium ml-2 px-2.5 py-0.5 rounded">
+																			Coding
+																		</span>
+																	)}
+																</div>
+																{question.isCodingQuestion && (
+																	<div className="flex items-center">
+																		<span className="text-xs text-gray-500 mr-2">
+																			Difficulty:
+																		</span>
+																		<DifficultyBar
+																			level={
+																				question.codingDifficulty
+																			}
+																		/>
+																	</div>
+																)}
+															</div>
+															<pre className="text-gray-700 whitespace-pre-wrap break-words">
+																{
+																	question.description
+																}
+															</pre>
+
+															{!hasAnswer ? (
+																<button
+																	onClick={() =>
+																		getQuestionAnswer(
+																			roundIndex,
+																			questionIndex
+																		)
 																	}
-																/>
+																	disabled={
+																		isLoading
+																	}
+																	className="mt-4 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-md border border-blue-300 hover:bg-blue-200 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+																>
+																	{isLoading ? (
+																		<>
+																			<svg
+																				className="animate-spin h-4 w-4 text-blue-600"
+																				xmlns="http://www.w3.org/2000/svg"
+																				fill="none"
+																				viewBox="0 0 24 24"
+																			>
+																				<circle
+																					className="opacity-25"
+																					cx="12"
+																					cy="12"
+																					r="10"
+																					stroke="currentColor"
+																					strokeWidth="4"
+																				></circle>
+																				<path
+																					className="opacity-75"
+																					fill="currentColor"
+																					d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+																				></path>
+																			</svg>
+																			<span>
+																				Generating
+																				Answer...
+																			</span>
+																		</>
+																	) : (
+																		<>
+																			<svg
+																				className="w-4 h-4"
+																				fill="none"
+																				stroke="currentColor"
+																				viewBox="0 0 24 24"
+																				xmlns="http://www.w3.org/2000/svg"
+																			>
+																				<path
+																					strokeLinecap="round"
+																					strokeLinejoin="round"
+																					strokeWidth="2"
+																					d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+																				></path>
+																			</svg>
+																			<span>
+																				Get
+																				AI
+																				Explanation
+																			</span>
+																		</>
+																	)}
+																</button>
+															) : null}
+														</div>
+
+														{/* AI-generated answer section */}
+														{hasAnswer && (
+															<div className="p-4 bg-blue-50 border-t border-blue-200">
+																<div className="flex items-center mb-2">
+																	<svg
+																		className="w-5 h-5 text-blue-600 mr-2"
+																		fill="none"
+																		stroke="currentColor"
+																		viewBox="0 0 24 24"
+																		xmlns="http://www.w3.org/2000/svg"
+																	>
+																		<path
+																			strokeLinecap="round"
+																			strokeLinejoin="round"
+																			strokeWidth="2"
+																			d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+																		></path>
+																	</svg>
+																	<h4 className="font-medium text-blue-800">
+																		AI
+																		Answer &
+																		Explanation
+																	</h4>
+																</div>
+																<div className="prose max-w-none text-gray-800">
+																	<div className="whitespace-pre-wrap">
+																		{
+																			questionAnswers[
+																				questionId
+																			]
+																		}
+																	</div>
+																</div>
 															</div>
 														)}
 													</div>
-													<pre className="text-gray-700 whitespace-pre-wrap break-words">
-														{question.description}
-													</pre>
-												</div>
-											)
+												);
+											}
 										)}
 									</div>
 								</div>

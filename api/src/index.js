@@ -8,6 +8,7 @@ const connectDB = require("./db/connection");
 const cookieParser = require("cookie-parser");
 const userRouter = require("./routes/user.route");
 const experienceRouter = require("./routes/experience.route");
+const aiRouter = require("./routes/ai.route");
 
 const port = process.env.PORT || 3000;
 
@@ -27,6 +28,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/user", userRouter);
 app.use("/api/experience", experienceRouter);
+app.use("/api/ai", aiRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
