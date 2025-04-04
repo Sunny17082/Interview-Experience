@@ -31,7 +31,7 @@ const handleGetSummary = async (req, res) => {
 
 
 		// Then in your prompt template:
-		const prompt = `Generate a concise summary of this interview experience:
+		const prompt = `Generate a detailed summary of this interview experience:
   
         Candidate Name: ${experienceData.name}
         Company: ${experienceData.companyName}
@@ -45,12 +45,10 @@ const handleGetSummary = async (req, res) => {
         Challenges Encountered: ${experienceData.challengesEncountered}
         Overall Feedback: ${experienceData.overallFeedback}
   
-        Please provide a very small summary that highlights:
-        key points from each round, the candidate's performance, and any challenges faced.
-        The summary should be in a single paragraph and should be easy to read.
-        The summary should be suitable for someone who is not familiar with the interview process.
-        include key points to remember for each round.
-        also include questions asked in short
+        Please provide a summary that highlights:
+		- Key takeaways from each round
+		- Important questions asked
+		- Any challenges faced during the interview process
         `;
 
 		// Generate the summary using Gemini
@@ -99,7 +97,8 @@ const handleGetAnswer = async (req, res) => {
       `;
 		} else {
 			prompt = `
-        Provide a small explanation and solution for this coding interview question it must have exact answer that is asked:
+        Provide a small explanation and solution for this interview question it must have exact answer that is asked
+		search wikipedia and give correct answer if any data is required to answer this question:
         
         Topic: ${topic}
         Question: ${questionData.description}

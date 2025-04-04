@@ -1,15 +1,30 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import SearchFilterSidebar from "../Components/SearchFilterSidebar";
 
 const Experiences = () => {
 	const [experiences, setExperiences] = useState([]);
 	const [filteredExperiences, setFilteredExperiences] = useState([]);
+	const [initialSearchTerm, setInitialSearchTerm] = useState("");
+	
+	// States for modals
+	const [showCompanyModal, setShowCompanyModal] = useState(false);
+	const [showRoleModal, setShowRoleModal] = useState(false);
+
+	const location = useLocation();
+	const searchParams = new URLSearchParams(location.search);
+	const searchQuery = searchParams.get("search");
 
 	useEffect(() => {
 		getExperience();
 	}, []);
+
+	useEffect(() => {
+		if (searchQuery) {
+			setInitialSearchTerm(searchQuery);
+		}
+	}, [searchQuery]);
 
 	const getExperience = async () => {
 		const response = await axios.get("/experience", {
@@ -28,16 +43,21 @@ const Experiences = () => {
 			<div className="max-w-7xl mx-auto">
 				<div className="flex flex-col md:flex-row gap-8">
 					{/* Sidebar */}
-					<div className="w-full md:w-1/4">
+					<div className="w-full md:w-1/4 z-10">
 						<SearchFilterSidebar
 							experiences={experiences}
 							setFilteredExperiences={setFilteredExperiences}
 							originalExperiences={experiences}
+							initialSearchTerm={initialSearchTerm}
+							showCompanyModal={showCompanyModal}
+							setShowCompanyModal={setShowCompanyModal}
+							showRoleModal={showRoleModal}
+							setShowRoleModal={setShowRoleModal}
 						/>
 					</div>
 
 					{/* Main Content */}
-					<div className="w-full md:w-3/4 space-y-8">
+					<div className="w-full md:w-3/4 space-y-8 z-0">
 						{filteredExperiences.length > 0 ? (
 							filteredExperiences.map((experience) => (
 								<Link
@@ -54,9 +74,7 @@ const Experiences = () => {
 											{/* Logo Section */}
 											<div className="mr-6 flex items-center justify-center">
 												<img
-													src={
-														"https://duncanlock.net/images/posts/better-figures-images-plugin-for-pelican/dummy-200x200.png"
-													}
+													src={experience.logo}
 													alt={`${experience.companyName} logo`}
 													className="w-26 h-26 object-cover rounded-xl"
 												/>
@@ -96,7 +114,8 @@ const Experiences = () => {
 																	experience.interviewStatus ===
 																	"offered"
 																		? "bg-green-100 text-green-800"
-																		: "bg-yellow-100 text-yellow-800"
+															: "bg-yellow-100 text-yellow-800"
+															
 																}`}
 													>
 														{

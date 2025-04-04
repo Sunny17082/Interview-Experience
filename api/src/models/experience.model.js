@@ -57,6 +57,10 @@ const experienceSchema = new mongoose.Schema(
 			required: true,
 			trim: true,
 		},
+		logo: {
+			type: String,
+			default: "",
+		},
 		interviewStatus: {
 			type: String,
 			required: true,
@@ -75,10 +79,23 @@ const experienceSchema = new mongoose.Schema(
 			default: "",
 		},
 		rounds: [RoundSchema],
-		createdAt: {
-			type: Date,
-			default: Date.now,
+		feedbackSentiment: {
+            score: Number,
+            comparative: Number,
+            category: {
+                type: String,
+				enum: ["positive", "neutral", "negative"],
+				default: "neutral",
+            }
+        },
+		helpful: {
+			type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+			default: [],
 		},
+		report: {
+			type: Number,
+			default: 0,
+		}
 	},
 	{
 		timestamps: true,

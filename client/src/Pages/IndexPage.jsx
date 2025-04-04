@@ -33,6 +33,13 @@ const IndexPage = () => {
 		setIsMenuOpen(!isMenuOpen);
 	};
 
+	const handleSearch = (e) => {
+		e.preventDefault();
+		window.location.href = `/experience?search=${encodeURIComponent(
+			searchQuery
+		)}`;
+	};
+
 	return (
 		<div className="min-h-screen bg-white text-gray-900">
 			<section className="bg-gray-900 text-white">
@@ -52,14 +59,26 @@ const IndexPage = () => {
 							</p>
 
 							<div className="mt-6 md:mt-8 bg-white rounded-lg flex items-center p-2 shadow-lg">
-								<input
-									type="text"
-									placeholder="Search by company, role, or skill..."
-									className="flex-1 p-2 md:p-3 bg-transparent focus:outline-none text-gray-900 text-base md:text-lg"
-								/>
-								<button className="bg-black p-2 md:p-3 rounded-md hover:bg-gray-800 transition-colors flex items-center">
-									<Search className="h-5 w-5 text-white" />
-								</button>
+								<form
+									onSubmit={handleSearch}
+									className="flex w-full"
+								>
+									<input
+										type="text"
+										placeholder="Search by company, role, or skill..."
+										className="flex-1 p-2 md:p-3 bg-transparent focus:outline-none text-gray-900 text-base md:text-lg"
+										value={searchQuery}
+										onChange={(e) =>
+											setSearchQuery(e.target.value)
+										}
+									/>
+									<button
+										type="submit"
+										className="bg-black p-2 md:p-3 rounded-md hover:bg-gray-800 transition-colors flex items-center"
+									>
+										<Search className="h-5 w-5 text-white" />
+									</button>
+								</form>
 							</div>
 
 							<div className="mt-4 flex flex-wrap gap-2">
@@ -67,6 +86,10 @@ const IndexPage = () => {
 									<span
 										key={role}
 										className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-full cursor-pointer transition-colors"
+										onClick={() => {
+											setSearchQuery(role);
+											handleSearch()
+										}}
 									>
 										{role}
 									</span>
@@ -97,7 +120,10 @@ const IndexPage = () => {
 									</p>
 
 									<div className="flex items-center justify-center">
-										<Link to={"/experience/new"} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-all transform hover:scale-105 hover:shadow-lg">
+										<Link
+											to={"/experience/new"}
+											className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-all transform hover:scale-105 hover:shadow-lg"
+										>
 											{/* <PlusCircle className="h-5 w-5" /> */}
 											<span>
 												Share Interview Experience

@@ -1,5 +1,14 @@
 const Experience = require("../models/experience.model");
 const { verifyUserFromToken } = require("../utils/authentication");
+const Company = require("../models/company.model");
+const Sentiment = require("sentiment");
+const sentiment = new Sentiment();
+
+const getSentimentCategory = (score) => {
+	if (score > 0) return "positive";
+	if (score < 0) return "negative";
+	return "neutral";
+};
 
 const handlePostExperience = async (req, res) => {
 	const {
@@ -27,9 +36,22 @@ const handlePostExperience = async (req, res) => {
 				.status(400)
 				.json({ success: false, message: "All fields are required" });
 		}
+
+		const feedbackSentiment = overallFeedback
+			? sentiment.analyze(overallFeedback)
+			: { score: 0, comparative: 0 };
+		
+		const companyDoc = await Company.findOne({ name: companyName });
+		let logo =
+			"https://cornellcapllc.com/wp-content/uploads/2017/08/logo-1.png";
+		if (companyDoc) {
+			logo = companyDoc.logo;
+		}
+
 		const experienceDoc = await Experience.create({
 			user: user.id,
 			name,
+			logo,
 			companyName,
 			role,
 			interviewStatus,
@@ -37,7 +59,13 @@ const handlePostExperience = async (req, res) => {
 			challengesEncountered,
 			overallFeedback,
 			rounds,
+			feedbackSentiment: {
+				score: feedbackSentiment.score,
+				comparative: feedbackSentiment.comparative,
+				category: getSentimentCategory(feedbackSentiment.score),
+			},
 		});
+
 		res.status(201).json({
 			success: true,
 			message: "new experience created",
