@@ -75,8 +75,8 @@ const Header = () => {
 							>
 								Home
 							</Link>
-							<a
-								href="#"
+							<Link
+								to={"/companies"}
 								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
 									activeItem === "Companies"
 										? "border-b-2 border-black text-gray-900"
@@ -85,9 +85,9 @@ const Header = () => {
 								onClick={() => handleItemClick("Companies")}
 							>
 								Companies
-							</a>
-							<a
-								href="#"
+							</Link>
+							<Link
+								to={"/discussion"}
 								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
 									activeItem === "Discussion"
 										? "border-b-2 border-black text-gray-900"
@@ -96,7 +96,7 @@ const Header = () => {
 								onClick={() => handleItemClick("Discussion")}
 							>
 								Discussion
-							</a>
+							</Link>
 							<a
 								href="#"
 								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${

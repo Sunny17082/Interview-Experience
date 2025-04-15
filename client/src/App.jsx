@@ -9,6 +9,12 @@ import axios from "axios";
 import { UserContextProvider } from "./UserContext";
 import ExperiencesPage from "./Pages/ExperiencesPage";
 import ExperiencePage from "./Pages/ExperiencePage";
+import CompanyForm from "./Pages/CompanyForm";
+import CompaniesPage from "./Pages/CompaniesPage";
+import CompanyPage from "./Pages/CompanyPage";
+import DiscussionForm from "./Pages/DiscussionForm";
+import DiscussionPage from "./Pages/DiscussionPage";
+import DiscussionsPage from "./Pages/DiscussionsPage";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.withCredentials = true;
@@ -24,6 +30,12 @@ function App() {
 					<Route path={"/experience"} element={<ExperiencesPage />} />
 					<Route path={"/experience/new"} element={<ExperienceForm />} />
 					<Route path={"/experience/:id"} element={<ExperiencePage />} />
+					<Route path={"/company/new"} element={<CompanyForm />} />
+					<Route path={"/companies"} element={<CompaniesPage />} />
+					<Route path={"/companies/:id"} element={<CompanyPage />} />
+					<Route path={"/discussion/new"} element={<DiscussionForm />} />
+					<Route path={"/discussion"} element={<DiscussionsPage />} />
+					<Route path={"/discussion/:id"} element={<DiscussionPage />} />
 				</Route>
 			</Routes>
 		</UserContextProvider>
@@ -31,3 +43,5 @@ function App() {
 }
 
 export default App;
+
+

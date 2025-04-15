@@ -40,7 +40,7 @@ const handlePostExperience = async (req, res) => {
 		const feedbackSentiment = overallFeedback
 			? sentiment.analyze(overallFeedback)
 			: { score: 0, comparative: 0 };
-		
+
 		const companyDoc = await Company.findOne({ name: companyName });
 		let logo =
 			"https://cornellcapllc.com/wp-content/uploads/2017/08/logo-1.png";
@@ -62,7 +62,7 @@ const handlePostExperience = async (req, res) => {
 			feedbackSentiment: {
 				score: feedbackSentiment.score,
 				comparative: feedbackSentiment.comparative,
-				category: getSentimentCategory(feedbackSentiment.score),
+				category: getSentimentCategory(feedbackSentiment.score), 
 			},
 		});
 
@@ -109,12 +109,71 @@ const handleGetExperienceById = async (req, res) => {
 		return res.status(200).json({ success: true, experienceDoc });
 	} catch (err) {
 		console.error("Error in handleGetExperienceById: ", err.message);
-		res.status(500).json({ success: false, message: "Internal server error"});
+		res.status(500).json({
+			success: false,
+			message: "Internal server error", 
+		});
+	}
+};
+
+const handleToggleHelpful = async (req, res) => {
+	const { id } = req.params;
+	const { token } = req.cookies;
+
+	try {
+		if (!token) {
+			return res
+				.status(401)
+				.json({ success: false, message: "Unauthorized" });
+		}
+		const user = await verifyUserFromToken(token);
+
+		if (!user) {
+			return res
+				.status(401)
+				.json({ success: false, message: "Unauthorized" });
+		}
+
+		const experienceDoc = await Experience.findById(id);
+
+		if (!experienceDoc) {
+			return res
+				.status(404)
+				.json({ success: false, message: "Experience not found" });
+		}
+
+		if (!experienceDoc.helpful) {
+			experienceDoc.helpful = [];
+		}
+
+		const hasMarkedHelpful = experienceDoc.helpful.includes(user.id);
+
+		if (hasMarkedHelpful) {
+			experienceDoc.helpful = experienceDoc.helpful.filter(
+				(userId) => userId.toString() !== user.id.toString()
+			);
+		} else {
+			experienceDoc.helpful.push(user.id);
+		}
+		await experienceDoc.save();
+		return res.status(200).json({
+			success: true,
+			message: hasMarkedHelpful
+				? "Removed from helpful"
+				: "Marked as helpful",
+			experienceDoc,
+		});
+	} catch (err) {
+		console.error("Error in toggleHelpful: ", err.message);
+		return res
+			.status(500)
+			.json({ success: false, message: "Internal server error" });
 	}
 };
 
 module.exports = {
 	handlePostExperience,
-    handleGetExperience,
-    handleGetExperienceById,
+	handleGetExperience,
+	handleGetExperienceById,
+	handleToggleHelpful,
 };

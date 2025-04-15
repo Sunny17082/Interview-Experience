@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import ReactMarkdown from "react-markdown";
+import { UserContext } from "../UserContext";
 
 const ExperiencePage = () => {
 	const { id } = useParams();
@@ -13,10 +14,13 @@ const ExperiencePage = () => {
 	const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 	const [questionAnswers, setQuestionAnswers] = useState({});
 	const [loadingAnswers, setLoadingAnswers] = useState({});
+	const [helpfulCount, setHelpfulCount] = useState(0);
+
+	const { user } = useContext(UserContext);
 
 	useEffect(() => {
 		getExperienceById();
-	}, []);
+	}, [isHelpful, user]);
 
 	const getExperienceById = async () => {
 		try {
@@ -26,6 +30,10 @@ const ExperiencePage = () => {
 			if (response.status === 200) {
 				console.log(response.data.experienceDoc);
 				setExperience(response.data.experienceDoc);
+				setHelpfulCount(response.data.experienceDoc.helpful.length);
+				setIsHelpful(
+					user && response.data.experienceDoc.helpful.includes(user.id)
+				);
 				if (response.data.experienceDoc?.rounds?.length > 0) {
 					setExpandedRounds(
 						Array(response.data.experienceDoc.rounds.length).fill(
@@ -100,9 +108,20 @@ const ExperiencePage = () => {
 		);
 	};
 
-	const handleHelpfulClick = () => {
-		setIsHelpful(!isHelpful);
-		// Here you could also implement an API call to track helpful votes
+	const handleHelpfulClick = async () => {
+		try {
+			const response = await axios.put(`/experience/${id}/helpful`, {
+				withCredentials: true,
+			});
+
+			if (response.status === 200) {
+				setIsHelpful(response.data.isHelpful);
+				toast.success(response.data.message);
+			}
+		} catch (err) {
+			console.error("Error updating helpful status:", err);
+			toast.error("Failed to update helpful status");
+		}
 	};
 
 	const toggleRoundExpanded = (roundIndex) => {
@@ -215,6 +234,7 @@ const ExperiencePage = () => {
 								d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
 							></path>
 						</svg>
+						{helpfulCount + " "}
 						{isHelpful ? "Helpful!" : "Helpful"}
 					</button>
 					<button

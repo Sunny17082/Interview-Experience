@@ -88,10 +88,12 @@ const experienceSchema = new mongoose.Schema(
 				default: "neutral",
             }
         },
-		helpful: {
-			type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-			default: [],
-		},
+		helpful: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "User",
+			},
+		],
 		report: {
 			type: Number,
 			default: 0,

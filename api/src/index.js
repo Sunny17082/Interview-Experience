@@ -10,6 +10,7 @@ const userRouter = require("./routes/user.route");
 const experienceRouter = require("./routes/experience.route");
 const aiRouter = require("./routes/ai.route");
 const companyRouter = require("./routes/company.route");
+const discussionRouter = require("./routes/discussion.route");
 
 const port = process.env.PORT || 3000;
 
@@ -31,6 +32,7 @@ app.use("/api/user", userRouter);
 app.use("/api/experience", experienceRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/company", companyRouter);
+app.use("/api/discussion", discussionRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
