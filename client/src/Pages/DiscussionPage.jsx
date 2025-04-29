@@ -57,8 +57,6 @@ const DiscussionPage = () => {
 			);
 			if (response.status === 200) {
 				toast.success("Comment added successfully.");
-			} else {
-				toast.error("Failed to add comment.");
 			}
 			setComment("");
 			getDiscussion();
@@ -219,7 +217,7 @@ const DiscussionPage = () => {
 		);
 
 		return processedContent;
-	};
+	}; 
 
 	if (loading) {
 		return (

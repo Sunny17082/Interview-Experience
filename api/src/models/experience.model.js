@@ -36,12 +36,12 @@ const RoundSchema = new mongoose.Schema({
 });
 
 const experienceSchema = new mongoose.Schema(
-    {
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
+	{
+		user: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
 		name: {
 			type: String,
 			required: true,
@@ -80,14 +80,14 @@ const experienceSchema = new mongoose.Schema(
 		},
 		rounds: [RoundSchema],
 		feedbackSentiment: {
-            score: Number,
-            comparative: Number,
-            category: {
-                type: String,
+			score: Number,
+			comparative: Number,
+			category: {
+				type: String,
 				enum: ["positive", "neutral", "negative"],
 				default: "neutral",
-            }
-        },
+			},
+		},
 		helpful: [
 			{
 				type: mongoose.Schema.Types.ObjectId,
@@ -97,16 +97,42 @@ const experienceSchema = new mongoose.Schema(
 		report: {
 			type: Number,
 			default: 0,
-		}
+		},
+		reporters: [
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: "User",
+			},
+		],
+		scheduledForDeletion: {
+			type: Date,
+			default: null,
+		},
+		reportedAt: {
+			type: Date,
+			default: null,
+		},
+		contentUpdatedAt: {
+			type: Date,
+			default: null,
+		},
+		comments: [
+			{
+				user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+				content: String,
+				createdAt: { type: Date, default: Date.now },
+				likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+				dislikes: [
+					{ type: mongoose.Schema.Types.ObjectId, ref: "User" },
+				],
+			},
+		],
 	},
 	{
 		timestamps: true,
 	}
 );
 
-const experience = mongoose.model(
-	"Experience",
-	experienceSchema
-);
+const experience = mongoose.model("Experience", experienceSchema);
 
 module.exports = experience;

@@ -1,5 +1,6 @@
 const Discussion = require("../models/discussion.model");
 const { verifyUserFromToken } = require("../utils/authentication");
+const { sendMail } = require("../utils/mailingService");
 
 const handlePostDiscussion = async (req, res) => {
 	try {
@@ -145,6 +146,14 @@ const handlePostComment = async (req, res) => {
 			createdAt: new Date(),
 		});
 		await discussionDoc.save();
+		sendMail(
+			user.name,
+			user.email,
+			"Somone commented on your discussion",
+			`Your discussion for ${discussionDoc.title} has a new comment`,
+			"View Experience",
+			`${process.env.FRONTEND_URL}/discussion/${discussionDoc._id}`
+		);
 		return res.status(201).json({
 			success: true,
 			message: "Comment added successfully",

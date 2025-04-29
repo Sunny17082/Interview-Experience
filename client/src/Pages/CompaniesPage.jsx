@@ -133,11 +133,11 @@ const CompaniesPage = () => {
 							key={company._id}
 							className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
 						>
-							<div className="h-44 bg-gray-50 flex items-center justify-center p-4">
+							<div className="h-44 bg-gray-50 flex items-center justify-center p-4 w-full">
 								<img
 									src={company.logo}
 									alt={company.name}
-									className="max-h-full max-w-full object-cover mix-blend-multiply"
+									className="w-full h-full object-contain mix-blend-multiply"
 								/>
 							</div>
 							<div className="p-4">

@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import ReactMarkdown from "react-markdown";
 import { UserContext } from "../UserContext";
+import { MessageCircle, Send, User, Clock } from "lucide-react";
 
 const ExperiencePage = () => {
 	const { id } = useParams();
@@ -15,6 +16,11 @@ const ExperiencePage = () => {
 	const [questionAnswers, setQuestionAnswers] = useState({});
 	const [loadingAnswers, setLoadingAnswers] = useState({});
 	const [helpfulCount, setHelpfulCount] = useState(0);
+
+	// New state for comments
+	const [comments, setComments] = useState([]);
+	const [comment, setComment] = useState("");
+	const [loadingComments, setLoadingComments] = useState(true);
 
 	const { user } = useContext(UserContext);
 
@@ -32,12 +38,14 @@ const ExperiencePage = () => {
 				setExperience(response.data.experienceDoc);
 				setHelpfulCount(response.data.experienceDoc.helpful.length);
 				setIsHelpful(
-					user && response.data.experienceDoc.helpful.includes(user.id)
+					user &&
+						response.data.experienceDoc.helpful.includes(user.id)
 				);
+				setLoadingComments(false);
 				if (response.data.experienceDoc?.rounds?.length > 0) {
 					setExpandedRounds(
 						Array(response.data.experienceDoc.rounds.length).fill(
-							true
+							false
 						)
 					);
 				}
@@ -45,6 +53,30 @@ const ExperiencePage = () => {
 		} catch (err) {
 			console.error("Error fetching experience data:", err);
 			toast.error("Failed to load interview experience");
+		}
+	};
+
+
+	// New function to submit a comment
+	const handleSubmitComment = async (e) => {
+		e.preventDefault();
+		if (!comment.trim()) return;
+		try {
+			const response = await axios.post(
+				`/experience/${id}/comment`,
+				{ comment },
+				{ withCredentials: true }
+			);
+			if (response.status === 201) {
+				toast.success("Comment added successfully.");
+				setComment("");
+				getExperienceById();
+			} else {
+				toast.error("Failed to add comment.");
+			}
+		} catch (err) {
+			console.error("Error adding comment:", err);
+			toast.error("Failed to add comment");
 		}
 	};
 
@@ -102,10 +134,32 @@ const ExperiencePage = () => {
 		});
 	};
 
-	const handleReport = () => {
-		toast.success(
-			"Report submitted successfully. Our team will review it."
-		);
+	// More detailed date formatting for comments
+	const formatCommentDate = (dateString) => {
+		const date = new Date(dateString);
+		return new Intl.DateTimeFormat("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		}).format(date);
+	};
+
+	const handleReport = async () => {
+		try {
+			const response = await axios.post(`/experience/${id}/report`, {
+			withCredentials: true,
+		});
+		if (response.status === 200) {
+			toast.success(response.data.message);
+		} else {
+			toast.error(response.data.message);
+		}
+		} catch (err) {
+			console.error("Error reporting experience:", err);
+			toast.error(err.response?.data?.message || "Failed to report experience");
+		}
 	};
 
 	const handleHelpfulClick = async () => {
@@ -130,7 +184,74 @@ const ExperiencePage = () => {
 		setExpandedRounds(newExpandedState);
 	};
 
-	// New function to generate summary
+	// New Avatar component for comments
+	const UserAvatar = ({ name }) => {
+		const firstLetter = name ? name.charAt(0).toUpperCase() : "U";
+
+		return (
+			<div className="bg-black w-8 h-8 rounded-full flex items-center justify-center text-white font-medium">
+				{firstLetter}
+			</div>
+		);
+	};
+
+	// Process markdown content for comments
+	const processMarkdown = (content) => {
+		// Process headings
+		let processedContent = content
+			.replace(
+				/^# (.*$)/gm,
+				'<h1 class="text-3xl font-bold mt-6 mb-4">$1</h1>'
+			)
+			.replace(
+				/^## (.*$)/gm,
+				'<h2 class="text-2xl font-bold mt-5 mb-3">$1</h2>'
+			)
+			.replace(
+				/^### (.*$)/gm,
+				'<h3 class="text-xl font-bold mt-4 mb-2">$1</h3>'
+			);
+
+		// Process formatting (bold, italic)
+		processedContent = processedContent
+			.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+			.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+
+		// Process bullet points
+		processedContent = processedContent.replace(
+			/^- (.*)$/gm,
+			"<li>$1</li>"
+		);
+
+		processedContent = processedContent.replace(
+			/(<li>.*<\/li>(\n|$))+/g,
+			(match) => {
+				return `<ul class="list-disc pl-5 my-3">${match}</ul>`;
+			}
+		);
+
+		// Process blockquotes
+		processedContent = processedContent.replace(
+			/^> (.*)$/gm,
+			'<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-3">$1</blockquote>'
+		);
+
+		// Process code blocks
+		processedContent = processedContent.replace(
+			/```(jsx|js|javascript)?\n([\s\S]*?)```/g,
+			'<pre class="bg-gray-800 text-gray-200 p-4 rounded-md overflow-x-auto my-4"><code>$2</code></pre>'
+		);
+
+		// Process inline code
+		processedContent = processedContent.replace(
+			/`([^`]+)`/g,
+			'<code class="bg-gray-100 text-gray-800 px-1 py-0.5 rounded">$1</code>'
+		);
+
+		return processedContent;
+	};
+
+	// Function to generate summary
 	const generateSummary = async () => {
 		if (!experience) return;
 
@@ -157,7 +278,7 @@ const ExperiencePage = () => {
 		}
 	};
 
-	// New function to get answer for a specific question
+	// Function to get answer for a specific question
 	const getQuestionAnswer = async (roundIndex, questionIndex) => {
 		if (!experience) return;
 
@@ -355,11 +476,9 @@ const ExperiencePage = () => {
 					)}
 				</div>
 				{summary ? (
-					<div className="prose max-w-none">
-						<div className="whitespace-pre-wrap">
-							<ReactMarkdown>{summary}</ReactMarkdown>
-						</div>
-					</div>
+					<ReactMarkdown>
+						{summary}
+					</ReactMarkdown>
 				) : (
 					<div className="text-gray-500 italic">
 						{isLoadingSummary
@@ -565,17 +684,23 @@ const ExperiencePage = () => {
 																		Explanation
 																	</h4>
 																</div>
-																<div className="prose max-w-none text-gray-800">
-																	<div className="whitespace-pre-wrap">
-																		<ReactMarkdown>
-																			{
-																				questionAnswers[
-																					questionId
-																				]
-																			}
-																		</ReactMarkdown>
-																	</div>
-																</div>
+																{/* <div
+																	className="prose prose-sm prose-gray max-w-none mb-3"
+																	dangerouslySetInnerHTML={{
+																		__html: processMarkdown(
+																			questionAnswers[
+																				questionId
+																			]
+																		),
+																	}}
+																/> */}
+																<ReactMarkdown>
+																	{
+																		questionAnswers[
+																			questionId
+																		]
+																	}
+																</ReactMarkdown>
 															</div>
 														)}
 													</div>
@@ -626,6 +751,99 @@ const ExperiencePage = () => {
 					)}
 				</div>
 				<p className="text-gray-700">{experience?.overallFeedback}</p>
+			</div>
+
+			{/* New Comments Section */}
+			<div className="mt-8 bg-white rounded-lg shadow-md p-6">
+				<div className="flex items-center mb-4">
+					<h2 className="text-xl font-bold text-gray-900">
+						Comments
+					</h2>
+					<div className="ml-2 flex items-center text-gray-500">
+						<MessageCircle size={18} className="mr-1" />
+						{experience?.comments?.length}
+					</div>
+				</div>
+
+				{loadingComments ? (
+					<div className="animate-pulse">
+						<div className="h-16 bg-gray-200 rounded mb-4"></div>
+						<div className="h-16 bg-gray-200 rounded mb-4"></div>
+					</div>
+				) : (
+					<div className="space-y-8">
+						{experience?.comments?.length === 0 ? (
+							<p className="text-gray-500 italic">
+								No comments yet. Be the first to share your
+								thoughts!
+							</p>
+						) : (
+							experience?.comments.map((comment) => (
+								<div
+									key={comment?._id}
+									className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+								>
+									<div className="flex items-center mb-3">
+										<div className="flex items-center">
+											<UserAvatar
+												name={comment?.user?.name}
+											/>
+											<span className="font-medium text-gray-900 ml-2">
+												{comment?.user?.name}
+											</span>
+										</div>
+										<span className="text-xs text-gray-500 ml-auto flex items-center">
+											<Clock size={12} className="mr-1" />
+											{formatCommentDate(
+												comment?.createdAt
+											)}
+										</span>
+									</div>
+									<div
+										className="prose prose-sm prose-gray max-w-none mb-3"
+										dangerouslySetInnerHTML={{
+											__html: processMarkdown(
+												comment?.content
+											),
+										}}
+									/>
+								</div>
+							))
+						)}
+					</div>
+				)}
+
+				{/* Add comment form */}
+				<form
+					onSubmit={handleSubmitComment}
+					className="mt-8 bg-gray-50 rounded-lg p-4 border border-gray-200"
+				>
+					<label
+						htmlFor="comment"
+						className="block text-sm font-medium text-gray-700 mb-2"
+					>
+						Add your comment
+					</label>
+					<textarea
+						id="comment"
+						rows={4}
+						value={comment}
+						onChange={(e) => setComment(e.target.value)}
+						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 resize-y"
+						placeholder="Write your comment... Markdown formatting is supported."
+					></textarea>
+					<div className="text-xs text-gray-500 mt-1 mb-3">
+						Markdown supports: **bold**, *italic*, ```code
+						blocks```, quotes, and more
+					</div>
+					<button
+						type="submit"
+						className="inline-flex items-center px-4 py-2 bg-black text-white font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+					>
+						<Send size={16} className="mr-2" />
+						Post Comment
+					</button>
+				</form>
 			</div>
 		</div>
 	);

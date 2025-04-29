@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
     googleId: {
         type: String,
-        unique: true,
     },
     name: {
         type: String,
@@ -27,6 +26,10 @@ const userSchema = new mongoose.Schema({
         default: false,
     },
     profileImg: {
+        type: String,
+        default: "",
+    },
+    cId: {
         type: String,
         default: "",
     }

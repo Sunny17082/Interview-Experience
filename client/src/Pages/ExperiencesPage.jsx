@@ -7,6 +7,7 @@ const Experiences = () => {
 	const [experiences, setExperiences] = useState([]);
 	const [filteredExperiences, setFilteredExperiences] = useState([]);
 	const [initialSearchTerm, setInitialSearchTerm] = useState("");
+	const [searchTerm, setSearchTerm] = useState("");
 	
 	// States for modals
 	const [showCompanyModal, setShowCompanyModal] = useState(false);
@@ -53,6 +54,8 @@ const Experiences = () => {
 							setShowCompanyModal={setShowCompanyModal}
 							showRoleModal={showRoleModal}
 							setShowRoleModal={setShowRoleModal}
+							searchTerm={searchTerm}
+							setSearchTerm={setSearchTerm}
 						/>
 					</div>
 
@@ -114,8 +117,7 @@ const Experiences = () => {
 																	experience.interviewStatus ===
 																	"offered"
 																		? "bg-green-100 text-green-800"
-															: "bg-yellow-100 text-yellow-800"
-															
+																		: "bg-yellow-100 text-yellow-800"
 																}`}
 													>
 														{
@@ -156,11 +158,27 @@ const Experiences = () => {
 								</Link>
 							))
 						) : (
-							<div className="bg-white p-8 rounded-xl text-center">
+							<div className="bg-white p-8 rounded-xl text-center space-y-4">
 								<p className="text-lg text-gray-600">
 									No experiences match your filters. Try
 									adjusting your criteria.
 								</p>
+								<div className="mt-6 flex flex-col items-center gap-2">
+									<p className="text-sm text-gray-500">
+										Looking for similar content? Try these
+										resources:
+									</p>
+									<a
+										href={
+											`https://www.geeksforgeeks.org/tag/${searchTerm}/`
+										}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-blue-600 hover:text-blue-800 transition-colors"
+									>
+										Search for {searchTerm} on GeeksForGeeks
+									</a>
+								</div>
 							</div>
 						)}
 					</div>

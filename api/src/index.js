@@ -11,6 +11,9 @@ const experienceRouter = require("./routes/experience.route");
 const aiRouter = require("./routes/ai.route");
 const companyRouter = require("./routes/company.route");
 const discussionRouter = require("./routes/discussion.route");
+const resourceRouter = require("./routes/resource.route");
+const jobsRouter = require("./routes/jobs.route");
+const { initCronJobs } = require("./utils/cron");
 
 const port = process.env.PORT || 3000;
 
@@ -21,7 +24,9 @@ app.use(cookieParser());
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 
 // Connect to DB
-connectDB();
+connectDB().then(() => {
+    initCronJobs();
+});
 
 // Routes
 app.get("/", (req, res) => {
@@ -33,6 +38,8 @@ app.use("/api/experience", experienceRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/company", companyRouter);
 app.use("/api/discussion", discussionRouter);
+app.use("/api/resource", resourceRouter);
+app.use("/api/jobs", jobsRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

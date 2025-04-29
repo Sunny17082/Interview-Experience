@@ -9,9 +9,10 @@ const SearchFilterSidebar = ({
 	setShowCompanyModal,
 	showRoleModal,
 	setShowRoleModal,
+	searchTerm,
+	setSearchTerm,
 }) => {
 	// State for all filter values
-	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedCompanies, setSelectedCompanies] = useState([]);
 	const [selectedRoles, setSelectedRoles] = useState([]);
 	const [packageRange, setPackageRange] = useState({ min: "", max: "" });

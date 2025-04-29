@@ -1,18 +1,24 @@
 const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const sendMail = require("../utils/mailingService");
+const { sendMail, sendBulkMail } = require("../utils/mailingService");
 const jwtSecret = process.env.JWT_SECRET;
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { body, validationResult } = require("express-validator");
+const Discussion = require("../models/discussion.model");
+const Resource = require("../models/resource.model");
+const Experience = require("../models/experience.model");
+const Jobs = require("../models/jobs.model");
+const Company = require("../models/company.model");
+
 
 const TRUSTED_DOMAINS = [
 	"gmail.com",
 	"outlook.com",
 	"hotmail.com",
 	"yahoo.com",
-	"ticollege.org"
+	"ticollege.org",
 ];
 
 // Validation middleware
@@ -99,13 +105,11 @@ const handleRegister = async (req, res) => {
 		}
 	} catch (error) {
 		console.error(error);
-		return res
-			.status(500)
-			.json({
-				success: false,
-				message: "Internal Server Error",
-				error: error.message,
-			});
+		return res.status(500).json({
+			success: false,
+			message: "Internal Server Error",
+			error: error.message,
+		});
 	}
 };
 
@@ -113,19 +117,21 @@ const handleLogin = async (req, res) => {
 	const { email, password } = req.body;
 	try {
 		if (!email || !password) {
-			return res
-				.status(400)
-				.json({
-					success: false,
-					path: "email",
-					message: "Email and password are required",
-				});
+			return res.status(400).json({
+				success: false,
+				path: "email",
+				message: "Email and password are required",
+			});
 		}
 		const userDoc = await User.findOne({ email });
 		if (!userDoc) {
 			return res
 				.status(404)
-				.json({ success: false, path: "email", message: "User not found" });
+				.json({
+					success: false,
+					path: "email",
+					message: "User not found",
+				});
 		} else {
 			const isPasswordValid = bcrypt.compareSync(
 				password,
@@ -134,44 +140,49 @@ const handleLogin = async (req, res) => {
 			if (!isPasswordValid) {
 				return res
 					.status(401)
-					.json({ success: false, path: "password", message: "Wrong password" });
+					.json({
+						success: false,
+						path: "password",
+						message: "Wrong password",
+					});
 			} else {
 				const token = jwt.sign(
-					{ id: userDoc._id, email, name: userDoc.name, role: userDoc.role },
+					{
+						id: userDoc._id,
+						email,
+						name: userDoc.name,
+						role: userDoc.role,
+					},
 					jwtSecret,
 					{},
 					(err, token) => {
 						res.cookie("token", token, {
 							httpOnly: true,
 							maxAge: 7 * 24 * 60 * 60 * 1000,
-							sameSite: "strict",	
+							sameSite: "strict",
 						});
-						return res
-							.status(200)
-							.json({
-								success: true,
-								message: "Login successful",
-								userData: {
-									id: userDoc.id,
-									name: userDoc.name,
-									email: userDoc.email,
-									role: userDoc.role,
-								},
-								token,
-							});
+						return res.status(200).json({
+							success: true,
+							message: "Login successful",
+							userData: {
+								id: userDoc.id,
+								name: userDoc.name,
+								email: userDoc.email,
+								role: userDoc.role,
+							},
+							token,
+						});
 					}
 				);
 			}
 		}
 	} catch (error) {
 		console.error(error);
-		return res
-			.status(500)
-			.json({
-				success: false,
-				message: "Internal Server Error",
-				error: error.message,
-			});
+		return res.status(500).json({
+			success: false,
+			message: "Internal Server Error",
+			error: error.message,
+		});
 	}
 };
 
@@ -262,15 +273,214 @@ const handleGetUser = (req, res) => {
 		return res.status(200).json({ success: true, user });
 	} catch (err) {
 		console.error(err.message);
-		return res
-			.status(500)
-			.json({
-				success: false,
-				message: "Internal Server Error",
-				error: err.message,
-			});
+		return res.status(500).json({
+			success: false,
+			message: "Internal Server Error",
+			error: err.message,
+		});
 	}
 };
+
+const handleGetUserById = async (req, res) => {
+	const { id } = req.params;
+
+	try {
+		if (!id) {
+			return res
+				.status(400)
+				.json({ success: false, message: "ID is required" });
+		}
+		const userDoc = await User.findById(id).select("-password -__v");
+		const discussionDoc = await Discussion.find({ user: id }).select(
+			"title _id"
+		);
+		const resourceDoc = await Resource.find({ user: id }).select(
+			"title _id"
+		);
+		const experienceDoc = await Experience.find({ user: id }).select(
+			"companyName _id"
+		);
+		if (!userDoc) {
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" });
+		}
+		return res.status(200).json({
+			success: true,
+			data: {
+				userDoc,
+				discussionDoc,
+				resourceDoc,
+				experienceDoc,
+			},
+		});
+	} catch (error) {
+		console.error(error);
+		return res.status(500).json({
+			success: false,
+			message: "Internal Server Error",
+			error: error.message,
+		});
+	}
+};
+
+const handleGetAllUser = async (req, res) => {
+	try {
+		const userDoc = await User.find({}).select("-password -__v");
+		if (!userDoc) {
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" });
+		}
+		return res.status(200).json({
+			success: true,
+			data: userDoc,
+		});
+	} catch (err) {
+		console.error(err.message);
+		return res.status(500).json({
+			success: false,
+			message: "Internal Server Error",
+			error: err.message,
+		});
+	}
+};
+
+const handleRoleChange = async (req, res) => {
+	const { id } = req.params;
+	const { role } = req.body;
+	try {
+		if (!id) {
+			return res
+				.status(400)
+				.json({ success: false, message: "ID is required" });
+		}
+		if (!role) {
+			return res
+				.status(400)
+				.json({ success: false, message: "Role is required" });
+		}
+		const userDoc = await User.findByIdAndUpdate(
+			id,
+			{ role },
+			{ new: true }
+		).select("-password -__v");
+		if (!userDoc) {
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" });
+		}
+		sendMail(
+			userDoc.name,
+			userDoc.email,
+			"Role updated",
+			`Your role has been updated to ${role}`,
+			"view profile",
+			`http://localhost:5173/profile/${userDoc._id}`
+		);
+		return res.status(200).json({
+			success: true,
+			data: userDoc,
+			message: "Role updated successfully",
+		});
+	} catch (error) {
+		console.error(error);
+		return res.status(500).json({
+			success: false,
+			message: "Internal Server Error",
+			error: error.message,
+		});
+	}
+}
+
+const handleBulkEmail = async (req, res) => {
+	try {
+		const { userIds, subject, content, cta, link } = req.body;
+
+		if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+			return res.status(400).json({
+				success: false,
+				message: "User IDs are required and must be an array",
+			});
+		}
+
+		if (!subject || !content) {
+			return res.status(400).json({
+				success: false,
+				message: "Subject and content are required",
+			});
+		}
+
+		// Get user details from database
+		const users = await User.find({ _id: { $in: userIds } }).select(
+			"name email"
+		);
+
+		if (users.length === 0) {
+			return res.status(404).json({
+				success: false,
+				message: "No valid users found",
+			});
+		}
+
+		// Format recipients for email service
+		const recipients = users.map((user) => ({
+			name: user.name,
+			email: user.email,
+		}));
+
+		// Send emails
+		await sendBulkMail(
+			recipients,
+			subject,
+			content,
+			cta || "view",
+			link || "http://localhost:5173"
+		);
+
+		return res.status(200).json({
+			success: true,
+			message: `Emails sent successfully to ${users.length} users`,
+		});
+	} catch (error) {
+		console.error("Error sending bulk emails:", error);
+		return res.status(500).json({
+			success: false,
+			message: "Internal Server Error",
+			error: error.message,
+		});
+	}
+};
+
+const handleGetDashboardData = async (req, res) => {
+	try {
+		const userCount = await User.countDocuments({});
+		const discussionCount = await Discussion.countDocuments({});
+		const resourceCount = await Resource.countDocuments({ });
+		const experienceCount = await Experience.countDocuments({ });
+		const jobCount = await Jobs.countDocuments({  });
+		const companyCount = await Company.countDocuments({ });
+
+		return res.status(200).json({
+			success: true,
+			data: {
+				discussions: discussionCount,
+				resources: resourceCount,
+				experiences: experienceCount,
+				jobs: jobCount,
+				companies: companyCount,
+				users: userCount,
+			},
+		});
+	} catch (err) {
+		console.error(err.message);
+		return res.status(500).json({
+			success: false,
+			message: "Internal Server Error",
+			error: err.message,
+		});
+	}
+}
 
 const handleLogout = (req, res) => {
 	res.clearCookie("token");
@@ -287,4 +497,9 @@ module.exports = {
 	handleGoogleLogin,
 	handleGoogleCallback,
 	handleGoogleLogin,
+	handleGetUserById,
+	handleGetAllUser,
+	handleRoleChange,
+	handleBulkEmail,
+	handleGetDashboardData,
 };

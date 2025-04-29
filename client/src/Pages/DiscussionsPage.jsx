@@ -210,7 +210,7 @@ const DiscussionsPage = () => {
 								<div className="flex items-center">
 									<ThumbsUp size={16} className="mr-1" />
 									{discussion.likes.length} like
-									{discussion.likes.length !== 1 ? "s" : ""}
+									{discussion.likes.length !== 1 ? "s" : ""} 
 								</div>
 							</div>
 						</Link>

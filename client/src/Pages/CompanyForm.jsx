@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useParams, useNavigate } from "react-router-dom";
 
 const CompanyForm = () => {
+	const { id } = useParams();
+	const navigate = useNavigate();
+	const [isLoading, setIsLoading] = useState(false);
 	const [company, setCompany] = useState({
 		name: "",
 		logo: "",
@@ -17,6 +21,29 @@ const CompanyForm = () => {
 			gap: "",
 		},
 	});
+
+	// Fetch company data if ID is provided (edit mode)
+	useEffect(() => {
+		if (id) {
+			const fetchCompanyData = async () => {
+				setIsLoading(true);
+				try {
+					const response = await axios.get(`/company/${id}`, {
+						withCredentials: true,
+					});
+					if (response.status === 200) {
+						setCompany(response.data.companyDoc);
+					}
+				} catch (err) {
+					toast.error("Failed to fetch company data");
+					console.error(err);
+				} finally {
+					setIsLoading(false);
+				}
+			};
+			fetchCompanyData();
+		}
+	}, [id]);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -65,43 +92,75 @@ const CompanyForm = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		setIsLoading(true);
 		try {
-			const response = await axios.post("/company", company, {
-			headers: {
-				"Content-Type": "application/json",
-			},
-			withCredentials: true,
-			});
-			if (response.status === 201) {
-				toast.success("Company information submitted successfully!");
-				setCompany({
-					name: "",
-					logo: "",
-					roles: [{ role: "", package: "", information: "" }],
-					links: "",
-					linkedIn: "",
-					eligibility: {
-						classX: "",
-						classXII: "",
-						graduation: "",
-						branch: [],
-						backlogs: "",
-						gap: "",
+			let response;
+
+			if (id) {
+				// Update existing company
+				response = await axios.put(`/company/${id}`, company, {
+					headers: {
+						"Content-Type": "application/json",
 					},
+					withCredentials: true,
 				});
+				if (response.status === 200) {
+					toast.success("Company information updated successfully!");
+					navigate("/companies"); // Redirect to companies list
+				}
 			} else {
-				toast.error("Failed to submit company information.");
+				// Create new company
+				response = await axios.post("/company", company, {
+					headers: {
+						"Content-Type": "application/json",
+					},
+					withCredentials: true,
+				});
+				if (response.status === 201) {
+					toast.success("Company information created successfully!");
+					setCompany({
+						name: "",
+						logo: "",
+						roles: [{ role: "", package: "", information: "" }],
+						links: "",
+						eligibility: {
+							classX: "",
+							classXII: "",
+							graduation: "",
+							branch: [],
+							backlogs: "",
+							gap: "",
+						},
+					});
+					navigate("/companies"); // Redirect to companies list
+				}
 			}
 		} catch (err) {
-			toast.error("An error occurred while submitting the form.");
+			toast.error(
+				`Failed to ${id ? "update" : "create"} company information`
+			);
 			console.error(err);
+		} finally {
+			setIsLoading(false);
 		}
 	};
+
+	if (isLoading && id) {
+		return (
+			<div className="w-full max-w-4xl mx-auto bg-white p-8 shadow-md">
+				<div className="flex justify-center items-center h-64">
+					<p className="text-xl text-gray-600">
+						Loading company data...
+					</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="w-full max-w-4xl mx-auto bg-white p-8 shadow-md">
 			<h1 className="text-3xl font-bold text-gray-800 mb-6">
-				Company Information
+				{id ? "Edit Company Information" : "Add Company Information"}
 			</h1>
 
 			<form onSubmit={handleSubmit} className="space-y-6">
@@ -153,7 +212,7 @@ const CompanyForm = () => {
 							htmlFor="links"
 							className="block text-sm font-medium text-gray-700 mb-1"
 						>
-							Company Links
+							Company Website
 						</label>
 						<input
 							type="text"
@@ -162,7 +221,7 @@ const CompanyForm = () => {
 							value={company.links}
 							onChange={handleChange}
 							className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-							placeholder="Website, LinkedIn, etc"
+							placeholder="https://company-website.com"
 						/>
 					</div>
 				</div>
@@ -182,72 +241,75 @@ const CompanyForm = () => {
 						</button>
 					</div>
 
-					{company.roles.map((role, index) => (
-						<div
-							key={index}
-							className="bg-gray-50 p-4 rounded mb-4"
-						>
-							<div className="flex justify-between items-center mb-2">
-								<h3 className="text-lg font-medium text-gray-700">
-									Role {index + 1}
-								</h3>
-								{company.roles.length > 1 && (
-									<button
-										type="button"
-										onClick={() => removeRole(index)}
-										className="text-red-600 hover:text-red-800"
-									>
-										Remove
-									</button>
-								)}
-							</div>
+					{company.roles &&
+						company.roles.map((role, index) => (
+							<div
+								key={index}
+								className="bg-gray-50 p-4 rounded mb-4"
+							>
+								<div className="flex justify-between items-center mb-2">
+									<h3 className="text-lg font-medium text-gray-700">
+										Role {index + 1}
+									</h3>
+									{company.roles.length > 1 && (
+										<button
+											type="button"
+											onClick={() => removeRole(index)}
+											className="text-red-600 hover:text-red-800"
+										>
+											Remove
+										</button>
+									)}
+								</div>
 
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">
+											Role Title
+										</label>
+										<input
+											type="text"
+											name="role"
+											value={role.role}
+											onChange={(e) =>
+												handleRoleChange(index, e)
+											}
+											className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+										/>
+									</div>
+
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">
+											Package
+										</label>
+										<input
+											type="text"
+											name="package"
+											value={role.package}
+											onChange={(e) =>
+												handleRoleChange(index, e)
+											}
+											className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+										/>
+									</div>
+								</div>
+
+								<div className="mt-4">
 									<label className="block text-sm font-medium text-gray-700 mb-1">
-										Role Title
+										Additional Information
 									</label>
-									<input
-										type="text"
-										name="role"
-										value={role.role}
+									<textarea
+										name="information"
+										value={role.information}
 										onChange={(e) =>
 											handleRoleChange(index, e)
 										}
 										className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-									/>
-								</div>
-
-								<div>
-									<label className="block text-sm font-medium text-gray-700 mb-1">
-										Package
-									</label>
-									<input
-										type="text"
-										name="package"
-										value={role.package}
-										onChange={(e) =>
-											handleRoleChange(index, e)
-										}
-										className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-									/>
+										rows="3"
+									></textarea>
 								</div>
 							</div>
-
-							<div className="mt-4">
-								<label className="block text-sm font-medium text-gray-700 mb-1">
-									Additional Information
-								</label>
-								<textarea
-									name="information"
-									value={role.information}
-									onChange={(e) => handleRoleChange(index, e)}
-									className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-									rows="3"
-								></textarea>
-							</div>
-						</div>
-					))}
+						))}
 				</div>
 
 				{/* Eligibility Section */}
@@ -375,12 +437,24 @@ const CompanyForm = () => {
 				</div>
 
 				{/* Submit Button */}
-				<div className="flex justify-end">
+				<div className="flex justify-end gap-4">
+					<button
+						type="button"
+						onClick={() => navigate("/companies")}
+						className="px-6 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+					>
+						Cancel
+					</button>
 					<button
 						type="submit"
+						disabled={isLoading}
 						className="px-6 py-2 bg-black text-white rounded hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500"
 					>
-						Submit
+						{isLoading
+							? "Processing..."
+							: id
+							? "Update Company"
+							: "Add Company"}
 					</button>
 				</div>
 			</form>

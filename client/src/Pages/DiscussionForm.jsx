@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import axios from "axios";	
+import axios from "axios";
 import { toast } from "react-toastify";
 
 const DiscussionForm = () => {
@@ -80,6 +80,102 @@ const DiscussionForm = () => {
 				setErrors({ submit: "Failed to post discussion" });
 			}
 		}
+	};
+
+	const processMarkdown = (content) => {
+		// Process headings (# Heading, ## Heading, ### Heading)
+		let processedContent = content
+			.replace(
+				/^# (.*$)/gm,
+				'<h1 class="text-3xl font-bold mt-6 mb-4">$1</h1>'
+			)
+			.replace(
+				/^## (.*$)/gm,
+				'<h2 class="text-2xl font-bold mt-5 mb-3">$1</h2>'
+			)
+			.replace(
+				/^### (.*$)/gm,
+				'<h3 class="text-xl font-bold mt-4 mb-2">$1</h3>'
+			);
+
+		// Process formatting (bold, italic)
+		processedContent = processedContent
+			.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+			.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+
+		// Process bullet points properly (fix nesting issues)
+		// First convert all bullet points to proper HTML list items
+		processedContent = processedContent.replace(
+			/^- (.*)$/gm,
+			"<li>$1</li>"
+		);
+
+		// Then wrap all consecutive list items in a single ul element
+		processedContent = processedContent.replace(
+			/(<li>.*<\/li>(\n|$))+/g,
+			(match) => {
+				return `<ul class="list-disc pl-5 my-3">${match}</ul>`;
+			}
+		);
+
+		// Process blockquotes
+		processedContent = processedContent.replace(
+			/^> (.*)$/gm,
+			'<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-3">$1</blockquote>'
+		);
+
+		// Process code blocks with language support
+		processedContent = processedContent.replace(
+			/```(jsx|js|javascript)?\n([\s\S]*?)```/g,
+			'<pre class="bg-gray-800 text-gray-200 p-4 rounded-md overflow-x-auto my-4"><code>$2</code></pre>'
+		);
+
+		// Process inline code
+		processedContent = processedContent.replace(
+			/`([^`]+)`/g,
+			'<code class="bg-gray-100 text-gray-800 px-1 py-0.5 rounded">$1</code>'
+		);
+
+		// Process tables with proper formatting
+		const tableRegex = /\|(.+)\|\n\|[-:| ]+\|\n((?:\|.+\|\n)+)/g;
+
+		processedContent = processedContent.replace(
+			tableRegex,
+			(match, headerRow, bodyRows) => {
+				// Process header
+				const headers = headerRow
+					.split("|")
+					.filter((cell) => cell.trim() !== "");
+				let tableHTML =
+					'<table class="w-full border-collapse my-4">\n<thead>\n<tr>\n';
+
+				headers.forEach((header) => {
+					tableHTML += `<th class="border border-gray-300 px-4 py-2 bg-gray-50">${header.trim()}</th>\n`;
+				});
+
+				tableHTML += "</tr>\n</thead>\n<tbody>\n";
+
+				// Process body rows
+				const rows = bodyRows.trim().split("\n");
+				rows.forEach((row) => {
+					const cells = row
+						.split("|")
+						.filter((cell) => cell.trim() !== "");
+					tableHTML += "<tr>\n";
+
+					cells.forEach((cell) => {
+						tableHTML += `<td class="border border-gray-300 px-4 py-2">${cell.trim()}</td>\n`;
+					});
+
+					tableHTML += "</tr>\n";
+				});
+
+				tableHTML += "</tbody>\n</table>";
+				return tableHTML;
+			}
+		);
+
+		return processedContent;
 	};
 
 	const handleTextFormat = (format) => {
@@ -205,14 +301,6 @@ const DiscussionForm = () => {
 - List item 2
 - List item 3
 
-1. Ordered item 1
-2. Ordered item 2
-3. Ordered item 3
-
-[Link to example](https://example.com)
-
-> This is a blockquote
-
 \`\`\`
 // This is a code block
 function example() {
@@ -224,23 +312,10 @@ function example() {
 |----------|----------|----------|
 | Cell 1   | Cell 2   | Cell 3   |
 | Cell 4   | Cell 5   | Cell 6   |
-  `;
 
-	// Custom renderer for ReactMarkdown to properly handle tables
-	const components = {
-		table: ({ node, ...props }) => (
-			<table className="markdown-table" {...props} />
-		),
-		thead: ({ node, ...props }) => (
-			<thead className="markdown-thead" {...props} />
-		),
-		tbody: ({ node, ...props }) => (
-			<tbody className="markdown-tbody" {...props} />
-		),
-		tr: ({ node, ...props }) => <tr className="markdown-tr" {...props} />,
-		th: ({ node, ...props }) => <th className="markdown-th" {...props} />,
-		td: ({ node, ...props }) => <td className="markdown-td" {...props} />,
-	};
+> This is a blockquote
+
+  `;
 
 	return (
 		<div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -564,13 +639,16 @@ function example() {
 							></textarea>
 						</>
 					) : (
-						<div className="border border-gray-300 rounded-md p-4 w-full min-h-64 bg-gray-50 overflow-auto markdown-preview">
+						<div className="border border-gray-300 rounded-md p-4 w-full min-h-64 bg-gray-50">
 							{formData.content ? (
-								<div className="prose prose-sm max-w-none">
-									<ReactMarkdown components={components}>
-										{formData.content}
-									</ReactMarkdown>
-								</div>
+								<div
+									className="prose prose-gray"
+									dangerouslySetInnerHTML={{
+										__html: processMarkdown(
+											formData.content
+										),
+									}}
+								/>
 							) : (
 								<div className="text-gray-400 mb-2">
 									<p>Content preview will appear here...</p>
@@ -617,159 +695,6 @@ function example() {
 					</button>
 				</div>
 			</form>
-
-			{/* Add custom styling for markdown preview */}
-			<style
-				dangerouslySetInnerHTML={{
-					__html: `
-        .markdown-preview .prose {
-          color: #333;
-        }
-        
-        .markdown-preview .prose h1 {
-          font-size: 2em;
-          font-weight: bold;
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
-          border-bottom: 1px solid #eee;
-          padding-bottom: 0.25em;
-        }
-        
-        .markdown-preview .prose h2 {
-          font-size: 1.5em;
-          font-weight: bold;
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
-          border-bottom: 1px solid #eee;
-          padding-bottom: 0.25em;
-        }
-        
-        .markdown-preview .prose h3 {
-          font-size: 1.25em;
-          font-weight: bold;
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
-        }
-        
-        .markdown-preview .prose p {
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
-        }
-        
-        .markdown-preview .prose ul, 
-        .markdown-preview .prose ol {
-          margin-top: 0.5em;
-          margin-bottom: 0.5em;
-          padding-left: 1.5em;
-        }
-        
-        .markdown-preview .prose ul {
-          list-style-type: disc;
-        }
-        
-        .markdown-preview .prose ol {
-          list-style-type: decimal;
-        }
-        
-        .markdown-preview .prose li {
-          margin-top: 0.25em;
-          margin-bottom: 0.25em;
-        }
-        
-        .markdown-preview .prose blockquote {
-          border-left: 4px solid #ddd;
-          padding-left: 1em;
-          color: #555;
-          margin: 0.5em 0;
-        }
-        
-        .markdown-preview .prose pre {
-          background-color: #f6f8fa;
-          border-radius: 3px;
-          padding: 0.5em;
-          overflow-x: auto;
-          margin: 0.5em 0;
-        }
-        
-        .markdown-preview .prose code {
-          background-color: #f6f8fa;
-          border-radius: 3px;
-          padding: 0.15em 0.25em;
-          font-family: monospace;
-        }
-        
-        .markdown-preview .prose a {
-          color: #0366d6;
-          text-decoration: none;
-        }
-        
-        .markdown-preview .prose a:hover {
-          text-decoration: underline;
-        }
-        
-        /* Table Styling - Fixed */
-        .markdown-table {
-          border-collapse: collapse;
-          width: 100%;
-          margin: 0.5em 0;
-          border: 1px solid #ddd;
-          font-size: 0.9em;
-        }
-        
-        .markdown-th, 
-        .markdown-td {
-          border: 1px solid #ddd;
-          padding: 8px;
-          text-align: left;
-        }
-        
-        .markdown-th {
-          background-color: #f6f8fa;
-          font-weight: bold;
-        }
-        
-        .markdown-tr:nth-child(even) {
-          background-color: #f9f9f9;
-        }
-        
-        .markdown-tr:hover {
-          background-color: #f1f1f1;
-        }
-        
-        /* Code syntax highlighting */
-        .markdown-preview .prose pre code {
-          display: block;
-          padding: 1em;
-          background-color: #282c34;
-          color: #abb2bf;
-          border-radius: 4px;
-          overflow-x: auto;
-          font-family: 'Courier New', Courier, monospace;
-        }
-        
-        /* Comment */
-        .markdown-preview .prose pre code .comment {
-          color: #5c6370;
-          font-style: italic;
-        }
-        
-        /* String */
-        .markdown-preview .prose pre code .string {
-          color: #98c379;
-        }
-        
-        /* Keyword */
-        .markdown-preview .prose pre code .keyword {
-          color: #c678dd;
-        }
-        
-        /* Function */
-        .markdown-preview .prose pre code .function {
-          color: #61afef;
-        }
-      `,
-				}}
-			/>
 		</div>
 	);
 };

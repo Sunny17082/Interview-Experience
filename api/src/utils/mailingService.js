@@ -56,4 +56,74 @@ const sendMail = (name, email, subject, content, cta, link) => {
 	}
 };
 
-module.exports = sendMail;
+const sendBulkMail = async (recipients, subject, content, cta, link) => {
+	try {
+		const emailPromises = recipients.map((recipient) => {
+			const message = `
+            <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border-radius: 8px; border: 1px solid #e0e0e0; background-color: #ffffff;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h1 style="color: #5c6ac4; margin: 0; font-size: 24px;">InterviewInsights</h1>
+                    <p style="color: #666666; margin-top: 5px;">Hello, ${
+						recipient.name
+					}!</p>
+                </div>
+                
+                <!-- Content -->
+                <div style="background-color: #f8f6fc; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
+                    <p style="margin-top: 0; color: #333333;">${content}</p>
+                </div>
+                
+                <!-- Button -->
+                ${
+					cta && link
+						? `
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href=${link} style="background-color: #6d5cae; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;">${cta}</a>
+                </div>
+                `
+						: ""
+				}
+                
+                <!-- Footer -->
+                <div style="text-align: center; color: #888888; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee;">
+                    <p>Contact us at support@interviewinsights.com</p>
+                </div>
+            </div>`;
+
+			const mailOptions = {
+				from: process.env.SMTP_MAIL,
+				to: recipient.email,
+				subject: subject,
+				html: message,
+			};
+
+			return new Promise((resolve, reject) => {
+				transporter.sendMail(mailOptions, (error, info) => {
+					if (error) {
+						console.log(
+							`Error sending email to ${recipient.email}:`,
+							error
+						);
+						reject(error);
+					} else {
+						console.log(
+							`Email sent to ${recipient.email}: ${info.response}`
+						);
+						resolve(info);
+					}
+				});
+			});
+		});
+
+		return Promise.all(emailPromises);
+	} catch (err) {
+		console.error("Error in bulk email sending:", err);
+		throw err;
+	}
+};
+
+module.exports = {
+	sendMail,
+	sendBulkMail,
+};

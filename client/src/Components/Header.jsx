@@ -1,5 +1,5 @@
-import React, { use, useContext, useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import React, {  useContext, useEffect, useState } from "react";
+import { Menu, X, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UserContext } from "../UserContext";
 import axios from "axios";
@@ -97,8 +97,8 @@ const Header = () => {
 							>
 								Discussion
 							</Link>
-							<a
-								href="#"
+							<Link
+								to={"/resources"}
 								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
 									activeItem === "Resources"
 										? "border-b-2 border-black text-gray-900"
@@ -107,7 +107,7 @@ const Header = () => {
 								onClick={() => handleItemClick("Resources")}
 							>
 								Resources
-							</a>
+							</Link>
 							<Link
 								to={"/experience"}
 								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
@@ -118,6 +118,17 @@ const Header = () => {
 								onClick={() => handleItemClick("Experience")}
 							>
 								Experience
+							</Link>
+							<Link
+								to={"/jobs"}
+								className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
+									activeItem === "Jobs"
+										? "border-b-2 border-black text-gray-900"
+										: "text-gray-500 hover:text-gray-900"
+								}`}
+								onClick={() => handleItemClick("Jobs")}
+							>
+								Jobs
 							</Link>
 						</div>
 					</div>
@@ -142,7 +153,15 @@ const Header = () => {
 
 					{user && (
 						<div className="hidden md:flex items-center">
-							<Link className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black">
+							{user.role === "admin" && (
+								<Link
+									to={"/dashboard"}
+									className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black"
+								>
+									<User size={20} className="mr-1" />
+								</Link>
+							)}
+							<Link to={`/profile/${user.id}`} className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black">
 								{user.name}
 							</Link>
 							<Link
