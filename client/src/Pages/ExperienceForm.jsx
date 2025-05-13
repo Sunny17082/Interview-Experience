@@ -1,7 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
+import { UserContext } from "../UserContext";
+import { toast } from "react-toastify";
 
 const ExperienceForm = () => {
+	const { id } = useParams();
+	const navigate = useNavigate();
+	const [loading, setLoading] = useState(id ? true : false);
+	const [error, setError] = useState("");
 	const [interviewStatus, setInterviewStatus] = useState("");
 	const [companyName, setCompanyName] = useState("");
 	const [role, setRole] = useState("");
@@ -24,6 +31,7 @@ const ExperienceForm = () => {
 		},
 	]);
 	const [formSubmitted, setFormSubmitted] = useState(false);
+	const { user } = useContext(UserContext);
 
 	const statusOptions = [
 		{
@@ -51,6 +59,57 @@ const ExperienceForm = () => {
 			activeText: "text-white",
 		},
 	];
+
+	// Fetch existing experience data if ID is provided
+	useEffect(() => {
+		const fetchExperience = async () => {
+			if (id) {
+				try {
+					setLoading(true);
+					const res = await axios.get(`/experience/${id}`, {
+						withCredentials: true,
+					});
+
+					if (res.data.success) {
+						const exp = res.data.experienceDoc;
+						setName(exp.name || "");
+						setCompanyName(exp.companyName || "");
+						setRole(exp.role || "");
+						setInterviewStatus(exp.interviewStatus || "");
+						setPackageOffered(exp.packageOffered || 0);
+						setChallengesEncountered(
+							exp.challengesEncountered || ""
+						);
+						setOverallFeedback(exp.overallFeedback || "");
+
+						// Only set rounds if they exist
+						if (exp.rounds && exp.rounds.length > 0) {
+							setRounds(
+								exp.rounds.map((round, index) => ({
+									...round,
+									number: index + 1,
+									questions: round.questions.map((q) => ({
+										...q,
+										codingDifficulty:
+											q.codingDifficulty || 5,
+									})),
+								}))
+							);
+						}
+					} else {
+						setError("Failed to load experience data");
+					}
+				} catch (err) {
+					console.error("Error fetching experience:", err);
+					setError("Failed to load experience data");
+				} finally {
+					setLoading(false);
+				}
+			}
+		};
+
+		fetchExperience();
+	}, [id]);
 
 	const addRound = () => {
 		setRounds([
@@ -125,6 +184,14 @@ const ExperienceForm = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		if(!user) {
+			toast.error("Please login to submit your experience.");
+			return;
+		};
+		if (user && user.isVerified === false) {
+			toast.error("Please verify your email before submitting.");
+			return;
+		};
 		const isValid =
 			companyName.trim() !== "" &&
 			role.trim() !== "" &&
@@ -136,53 +203,98 @@ const ExperienceForm = () => {
 			);
 
 		if (isValid) {
+			const experienceData = {
+				name,
+				companyName,
+				role,
+				interviewStatus,
+				packageOffered,
+				challengesEncountered,
+				overallFeedback,
+				rounds,
+			};
+
 			try {
-				const res = await axios.post(
-					"/experience",
-					{
-						name,
-						companyName,
-						role,
-						interviewStatus,
-						packageOffered,
-						challengesEncountered,
-						overallFeedback,
-						rounds,
-					},
-					{
+				let res;
+				if (id) {
+					// Update existing experience
+					res = await axios.put(`/experience/${id}`, experienceData, {
 						headers: {
 							"Content-Type": "application/json",
 						},
 						withCredentials: true,
-					}
-				);
-				if(res.status === 201) {
+					});
+				} else {
+					// Create new experience
+					res = await axios.post("/experience", experienceData, {
+						headers: {
+							"Content-Type": "application/json",
+						},
+						withCredentials: true,
+					});
+				}
+
+				if (res.status === 200 || res.status === 201) {
 					setFormSubmitted(true);
+					// If editing, redirect to the experience page after a short delay
+					if (id) {
+						setTimeout(() => {
+							navigate(`/experience/${id}`);
+						}, 2000);
+					}
 				}
 			} catch (err) {
 				console.error(err);
+				setError("Failed to submit experience. Please try again.");
 			}
 		} else {
-			alert("Please fill in all required fields.");
+			setError("Please fill in all required fields.");
 		}
 	};
+
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center h-screen">
+				<div className="text-center">
+					<div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+					<p className="mt-2 text-gray-700">
+						Loading experience data...
+					</p>
+				</div>
+			</div>
+		);
+	}
 
 	if (formSubmitted) {
 		return (
 			<div className="flex items-center justify-center h-screen">
 				<div className="max-w-md mx-auto p-4 sm:p-6 bg-white shadow-md rounded-lg text-center">
 					<h2 className="text-xl sm:text-2xl font-bold text-green-600 mb-4">
-						Interview Experience Submitted!
+						{id
+							? "Interview Experience Updated!"
+							: "Interview Experience Submitted!"}
 					</h2>
 					<p className="text-gray-700 mb-4">
-						Thank you for sharing your interview experience.
+						{id
+							? "Thank you for updating your interview experience."
+							: "Thank you for sharing your interview experience."}
 					</p>
-					<button
-						onClick={() => setFormSubmitted(false)}
-						className="w-full px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
-					>
-						Add Another Experience
-					</button>
+					<div className="flex flex-col sm:flex-row gap-4">
+						<button
+							onClick={() => setFormSubmitted(false)}
+							className="w-full px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
+						>
+							{id ? "Continue Editing" : "Add Another Experience"}
+						</button>
+						{id && (
+							<button
+								onClick={() => navigate(`/experience/${id}`)}
+								className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+							>
+								View Experience
+							</button>
+						)}
+					</div>
 				</div>
 			</div>
 		);
@@ -194,8 +306,16 @@ const ExperienceForm = () => {
 			className="max-w-4xl mx-auto p-4 sm:p-6 bg-white shadow-md rounded-lg"
 		>
 			<h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6">
-				Interview Experience
+				{id
+					? "Edit Interview Experience"
+					: "Share Interview Experience"}
 			</h1>
+
+			{error && (
+				<div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+					{error}
+				</div>
+			)}
 
 			{/* Name Section */}
 			<div className="mb-6">
@@ -308,8 +428,8 @@ const ExperienceForm = () => {
 				>
 					<div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0">
 						<div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full">
-							<span className="text-lg  font-semibold text-gray-700 sm:mr-4">
-								Round{round.number}
+							<span className="text-lg font-semibold text-gray-700 sm:mr-4">
+								Round {round.number}
 							</span>
 							<input
 								type="text"
@@ -460,7 +580,7 @@ const ExperienceForm = () => {
 					type="submit"
 					className="w-full py-3 mt-4 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
 				>
-					Submit Experience
+					{id ? "Update Experience" : "Submit Experience"}
 				</button>
 			</div>
 		</form>

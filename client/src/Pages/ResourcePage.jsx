@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -11,6 +11,7 @@ const ResourcePage = () => {
 
 	useEffect(() => {
 		getResources();
+		// eslint-disable-next-line
 	}, [user]);
 
 	const getResources = async () => {
@@ -19,25 +20,31 @@ const ResourcePage = () => {
 				withCredentials: true,
 			});
 			if (response.status === 200) {
-				if (user && response.data.data) {
-					// Process resources to add userInteraction state
+				if (response.data.data) {
 					const processedResources = response.data.data.map(
 						(resource) => {
-							const userId = user.id;
-							const isLiked =
-								resource.likes &&
-								resource.likes.includes(userId);
-							const isDisliked =
-								resource.dislikes &&
-								resource.dislikes.includes(userId);
-							return {
-								...resource,
-								userInteraction: isLiked
-									? "liked"
-									: isDisliked
-									? "disliked"
-									: "none",
-							};
+							if (user) {
+								const userId = user.id;
+								const isLiked =
+									resource.likes &&
+									resource.likes.includes(userId);
+								const isDisliked =
+									resource.dislikes &&
+									resource.dislikes.includes(userId);
+								return {
+									...resource,
+									userInteraction: isLiked
+										? "liked"
+										: isDisliked
+										? "disliked"
+										: "none",
+								};
+							} else {
+								return {
+									...resource,
+									userInteraction: "none",
+								};
+							}
 						}
 					);
 					setResources(processedResources);

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { UserContext } from "../UserContext";
 
 const ResourceForm = () => {
 	const [formData, setFormData] = useState({
@@ -9,8 +10,10 @@ const ResourceForm = () => {
 		description: "",
 		url: "",
 		type: "",
-		tags: "", 
+		tags: "",
 	});
+
+	const { user } = useContext(UserContext);
 
 	const [errors, setErrors] = useState({});
 
@@ -68,6 +71,14 @@ const ResourceForm = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		if (!user) {
+			toast.error("Please login to submit your experience.");
+			return;
+		}
+		if (user && user.isVerified === false) {
+			toast.error("Please verify your email before submitting.");
+			return;
+		}
 		if (validate()) {
 			try {
 				const response = await axios.post(

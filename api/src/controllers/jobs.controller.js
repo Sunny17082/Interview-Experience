@@ -38,7 +38,7 @@ const handlePostJobs = async (req, res) => {
 
 const handleGetJobs = async (req, res) => {
 	try {
-		const jobsDoc = await Jobs.find({});
+		const jobsDoc = await Jobs.find({}).sort({ applicationDeadline: -1 });
 		if (!jobsDoc) {
 			return res.status(404).json({
 				success: false,

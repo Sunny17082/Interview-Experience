@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import axios from "axios";
+import { UserContext } from "../UserContext";
 
 const JobsForm = () => {
 	const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ const JobsForm = () => {
 	const [errors, setErrors] = useState({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [submitSuccess, setSubmitSuccess] = useState(false);
+
+	const { user } = useContext(UserContext);
 
 	const validateForm = () => {
 		const newErrors = {};
@@ -41,6 +44,14 @@ const JobsForm = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		if (!user) {
+			toast.error("Please login to submit your experience.");
+			return;
+		}
+		if (user && user.isVerified === false) {
+			toast.error("Please verify your email before submitting.");
+			return;
+		}
 		if (validateForm()) {
 			setIsSubmitting(true);
 			try {

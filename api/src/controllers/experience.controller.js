@@ -7,8 +7,8 @@ const User = require("../models/user.model");
 const { sendMail } = require("../utils/mailingService");
 
 const getSentimentCategory = (score) => {
-	if (score > 0) return "positive";
-	if (score < 0) return "negative";
+	if (score > 1) return "positive";
+	if (score < -1) return "negative";
 	return "neutral";
 };
 
@@ -38,12 +38,12 @@ const handlePostExperience = async (req, res) => {
 				.status(400)
 				.json({ success: false, message: "All fields are required" });
 		}
-
 		const feedbackSentiment = overallFeedback
 			? sentiment.analyze(overallFeedback)
 			: { score: 0, comparative: 0 };
-
-		const companyDoc = await Company.findOne({ name: companyName });
+		const companyDoc = await Company.findOne({
+			name: { $regex: new RegExp(`^${companyName.trim()}$`, "i") },
+		});
 		let logo =
 			"https://cornellcapllc.com/wp-content/uploads/2017/08/logo-1.png";
 		if (companyDoc) {
@@ -64,7 +64,7 @@ const handlePostExperience = async (req, res) => {
 			feedbackSentiment: {
 				score: feedbackSentiment.score,
 				comparative: feedbackSentiment.comparative,
-				category: getSentimentCategory(feedbackSentiment.score), 
+				category: getSentimentCategory(feedbackSentiment.score),
 			},
 		});
 
@@ -102,7 +102,9 @@ const handleGetExperience = async (req, res) => {
 const handleGetExperienceById = async (req, res) => {
 	const { id } = req.params;
 	try {
-		const experienceDoc = await Experience.findById(id).populate("user", "name email").populate("comments.user", "name email");
+		const experienceDoc = await Experience.findById(id)
+			.populate("user", "name email")
+			.populate("comments.user", "name email");
 		if (!experienceDoc) {
 			return res
 				.status(404)
@@ -113,7 +115,7 @@ const handleGetExperienceById = async (req, res) => {
 		console.error("Error in handleGetExperienceById: ", err.message);
 		res.status(500).json({
 			success: false,
-			message: "Internal server error", 
+			message: "Internal server error",
 		});
 	}
 };
@@ -196,7 +198,7 @@ const handlePostComment = async (req, res) => {
 				.status(400)
 				.json({ success: false, message: "Missing required fields" });
 		}
-		if(!experienceDoc.comments) {
+		if (!experienceDoc.comments) {
 			experienceDoc.comments = [];
 		}
 		experienceDoc.comments.push({
@@ -212,7 +214,7 @@ const handlePostComment = async (req, res) => {
 			`Your experience for ${experienceDoc.companyName} has a new comment`,
 			"View Experience",
 			`${process.env.FRONTEND_URL}/experience/${experienceDoc._id}`
-		)
+		);
 		return res.status(201).json({
 			success: true,
 			message: "Comment added successfully",
@@ -260,12 +262,10 @@ const handleReport = async (req, res) => {
 		}
 
 		if (experienceDoc.reporters.includes(user.id)) {
-			return res
-				.status(400)
-				.json({
-					success: false,
-					message: "You have already reported this experience",
-				});
+			return res.status(400).json({
+				success: false,
+				message: "You have already reported this experience",
+			});
 		}
 
 		// Add user to reporters list
@@ -279,9 +279,7 @@ const handleReport = async (req, res) => {
 			const author = await User.findById(experienceDoc.user);
 			if (author && author.email) {
 				const subject = "Your post has been reported multiple times";
-				const content = `Your interview experience for ${
-					experienceDoc.companyName
-				} (${experienceDoc.role}) has been reported by multiple users.
+				const content = `Your interview experience for ${experienceDoc.companyName} (${experienceDoc.role}) has been reported by multiple users.
         		Please review and update your post within 24 hours or it will be automatically removed.`;
 				const cta = "Review Post";
 				const link = `${process.env.FRONTEND_URL}/experience/${experienceDoc._id}`;
@@ -297,7 +295,7 @@ const handleReport = async (req, res) => {
 
 				// Set scheduled deletion date
 				experienceDoc.scheduledForDeletion = new Date(
-					Date.now() + 24 * 60 * 60 * 1000
+					Date.now() + 60 * 1000 * 60 * 24
 				);
 
 				// Record the time of reporting
@@ -322,7 +320,6 @@ const handleReport = async (req, res) => {
 	}
 };
 
-
 const handleUpdateExperience = async (req, res) => {
 	const { id } = req.params;
 	const { token } = req.cookies;
@@ -345,12 +342,10 @@ const handleUpdateExperience = async (req, res) => {
 
 		// Check if this user is the author
 		if (experienceDoc.user.toString() !== user.id.toString()) {
-			return res
-				.status(403)
-				.json({
-					success: false,
-					message: "You are not authorized to update this experience",
-				});
+			return res.status(403).json({
+				success: false,
+				message: "You are not authorized to update this experience",
+			});
 		}
 
 		// Check if there are actual content changes (not just adding comments)
@@ -433,10 +428,61 @@ const handleUpdateExperience = async (req, res) => {
 	}
 };
 
+const handleGetExperienceByLimit = async (req, res) => {
+	const { limit } = req.query;
+	try {
+		const experienceDoc = await Experience.find({}).sort({ createdAt: -1 }).limit(3);
+		if (!experienceDoc || experienceDoc.length === 0) {
+			return res
+				.status(404)
+				.json({ success: false, message: "No experience found" });
+		}
+		return res.status(200).json({ success: true, experienceDoc });
+	} catch (err) {
+		console.error("Error in handleGetExperienceByLimit: ", err);
+		res.status(500).json({
+			success: false,
+			message: "Internal server error",
+		});
+	}
+};
+
+const handleDeleteExperience = async (req, res) => {
+	const { id } = req.params;
+	const { token } = req.cookies;
+
+	try {
+		if (!token) {
+			return res
+				.status(401)
+				.json({ success: false, message: "Unauthorized" });
+		}
+		const user = verifyUserFromToken(token);
+		if (!user) {
+			return res
+				.status(401)
+				.json({ success: false, message: "Unauthorized" });
+		}
+		await Experience.findByIdAndDelete(id);
+		return res.status(200).json({
+			success: true,
+			message: "Experience deleted successfully",
+		});
+	} catch (err) {
+		console.error("Error in handleDeleteExperience:", err.message);
+		return res
+			.status(500)
+			.json({ success: false, message: "Internal server error" });
+	}
+};
+
 module.exports = {
 	handlePostExperience,
 	handleGetExperience,
 	handleGetExperienceById,
+	handleUpdateExperience,
+	handleDeleteExperience,
+	handleGetExperienceByLimit,
 	handleToggleHelpful,
 	handlePostComment,
 	handleReport,

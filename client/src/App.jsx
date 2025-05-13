@@ -21,6 +21,9 @@ import Dashboard from "./Pages/Dashboard";
 import JobsForm from "./Pages/JobsForm";
 import JobsPage from "./Pages/JobsPage";
 import ProfilePage from "./Pages/profilePage";
+import ForgotPassword from "./Pages/ForgotPassword";
+import ResetPassword from "./Pages/ResetPassword";
+import VerifyEmail from "./Pages/VerifyEmail";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.withCredentials = true;
@@ -39,11 +42,18 @@ function App() {
 						element={<ExperienceForm />}
 					/>
 					<Route
+						path={"/experience/edit/:id"}
+						element={<ExperienceForm />}
+					/>
+					<Route
 						path={"/experience/:id"}
 						element={<ExperiencePage />}
 					/>
 					<Route path={"/company/new"} element={<CompanyForm />} />
-					<Route path={"/company/edit/:id"} element={<CompanyForm />} />
+					<Route
+						path={"/company/edit/:id"}
+						element={<CompanyForm />}
+					/>
 					<Route path={"/companies"} element={<CompaniesPage />} />
 					<Route path={"/companies/:id"} element={<CompanyPage />} />
 					<Route
@@ -60,6 +70,12 @@ function App() {
 					<Route path={"/jobs"} element={<JobsPage />} />
 					<Route path={"/jobs/new"} element={<JobsForm />} />
 					<Route path={"/profile/:id"} element={<ProfilePage />} />
+					<Route
+						path={"/forgotpassword"}
+						element={<ForgotPassword />}
+					/>
+					<Route path={"/resetpassword/:token"} element={<ResetPassword />} />
+					<Route path={"/verifyemail/:token"} element={<VerifyEmail />} />
 				</Route>
 				<Route path={"/dashboard"} element={<Dashboard />} />
 			</Routes>
@@ -68,5 +84,3 @@ function App() {
 }
 
 export default App;
-
-

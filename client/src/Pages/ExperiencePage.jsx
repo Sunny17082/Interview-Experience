@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import ReactMarkdown from "react-markdown";
 import { UserContext } from "../UserContext";
-import { MessageCircle, Send, User, Clock } from "lucide-react";
+import { MessageCircle, Send, User, Clock, Edit, Trash } from "lucide-react";
+import DeleteConfirmationModal from "../Components/DeleteConfirmationModal";
+import { Link } from "react-router-dom";
 
 const ExperiencePage = () => {
 	const { id } = useParams();
@@ -12,15 +14,18 @@ const ExperiencePage = () => {
 	const [expandedRounds, setExpandedRounds] = useState([]);
 	const [isHelpful, setIsHelpful] = useState(false);
 	const [summary, setSummary] = useState("");
-	const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+	const [isLoadingSummary, setIsLoadingSummary] = useState(false); 
 	const [questionAnswers, setQuestionAnswers] = useState({});
 	const [loadingAnswers, setLoadingAnswers] = useState({});
 	const [helpfulCount, setHelpfulCount] = useState(0);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 	// New state for comments
 	const [comments, setComments] = useState([]);
 	const [comment, setComment] = useState("");
 	const [loadingComments, setLoadingComments] = useState(true);
+
+	const navigate = useNavigate();
 
 	const { user } = useContext(UserContext);
 
@@ -56,10 +61,13 @@ const ExperiencePage = () => {
 		}
 	};
 
-
 	// New function to submit a comment
 	const handleSubmitComment = async (e) => {
 		e.preventDefault();
+		if (!user) {
+			toast.error("Please log in to add a comment.");
+			return;
+		}
 		if (!comment.trim()) return;
 		try {
 			const response = await axios.post(
@@ -146,24 +154,40 @@ const ExperiencePage = () => {
 		}).format(date);
 	};
 
-	const handleReport = async () => {
-		try {
-			const response = await axios.post(`/experience/${id}/report`, {
+	const handleDeleteExperience = async () => {
+		const response = await axios.delete(`/experience/${id}`, {
 			withCredentials: true,
 		});
 		if (response.status === 200) {
-			toast.success(response.data.message);
-		} else {
-			toast.error(response.data.message);
+			toast.success("Experience deleted successfully.");
+			navigate("/experience");
 		}
+	}
+
+	const handleReport = async () => {
+		try {
+			const response = await axios.post(`/experience/${id}/report`, {
+				withCredentials: true,
+			});
+			if (response.status === 200) {
+				toast.success(response.data.message);
+			} else {
+				toast.error(response.data.message);
+			}
 		} catch (err) {
 			console.error("Error reporting experience:", err);
-			toast.error(err.response?.data?.message || "Failed to report experience");
+			toast.error(
+				err.response?.data?.message || "Failed to report experience"
+			);
 		}
 	};
 
 	const handleHelpfulClick = async () => {
 		try {
+			if (!user) {
+				toast.error("Please log in to mark as helpful.");
+				return;
+			}
 			const response = await axios.put(`/experience/${id}/helpful`, {
 				withCredentials: true,
 			});
@@ -335,7 +359,7 @@ const ExperiencePage = () => {
 				<div className="flex items-center gap-2">
 					<button
 						onClick={handleHelpfulClick}
-						className={`px-3 py-1.5 rounded-md flex items-center gap-2 transition ${
+						className={`px-3 py-1 rounded-md flex items-center gap-2 transition ${
 							isHelpful
 								? "bg-green-100 text-green-800 border border-green-500"
 								: "bg-gray-100 text-gray-800 border border-gray-300 hover:bg-gray-200"
@@ -360,7 +384,7 @@ const ExperiencePage = () => {
 					</button>
 					<button
 						onClick={handleReport}
-						className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
+						className="px-3 py-1 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
 					>
 						<svg
 							className="w-4 h-4"
@@ -378,6 +402,22 @@ const ExperiencePage = () => {
 						</svg>
 						Report
 					</button>
+					{user && user.name === experience?.user?.name && (
+						<Link
+							to={`/experience/edit/${experience._id}`}
+							className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
+						>
+							<Edit size={16} />
+						</Link>
+					)}
+					{user && user.name === experience?.user?.name && (
+						<button
+							onClick={() => setShowDeleteModal(true)}
+							className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
+						>
+							<Trash size={16} />
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -476,9 +516,7 @@ const ExperiencePage = () => {
 					)}
 				</div>
 				{summary ? (
-					<ReactMarkdown>
-						{summary}
-					</ReactMarkdown>
+					<ReactMarkdown>{summary}</ReactMarkdown>
 				) : (
 					<div className="text-gray-500 italic">
 						{isLoadingSummary
@@ -716,14 +754,16 @@ const ExperiencePage = () => {
 			</div>
 
 			{/* Challenges Encountered */}
-			<div className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm">
-				<h2 className="text-xl font-bold text-gray-900 mb-2">
-					Challenges Encountered
-				</h2>
-				<p className="text-gray-700">
-					{experience?.challengesEncountered}
-				</p>
-			</div>
+			{experience?.challengesEncountered !== "" && (
+				<div className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm">
+					<h2 className="text-xl font-bold text-gray-900 mb-2">
+						Challenges Encountered
+					</h2>
+					<p className="text-gray-700">
+						{experience?.challengesEncountered}
+					</p>
+				</div>
+			)}
 
 			{/* Overall Feedback */}
 			<div className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm">
@@ -752,6 +792,13 @@ const ExperiencePage = () => {
 				</div>
 				<p className="text-gray-700">{experience?.overallFeedback}</p>
 			</div>
+
+			<DeleteConfirmationModal
+				isOpen={showDeleteModal}
+				onClose={() => setShowDeleteModal(false)}
+				onConfirm={handleDeleteExperience}
+				itemName="interview experience"
+			/>
 
 			{/* New Comments Section */}
 			<div className="mt-8 bg-white rounded-lg shadow-md p-6">

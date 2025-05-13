@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useCallback } from "react";
 import {
 	Camera,
 	Edit,
@@ -14,10 +14,12 @@ import {
 	MessageSquare,
 	Book,
 	Search,
+	Upload,
 } from "lucide-react";
 import { UserContext } from "../UserContext";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const ProfilePage = () => {
 	// Changed from user to userData
@@ -43,12 +45,16 @@ const ProfilePage = () => {
 	const [profileImgFile, setProfileImgFile] = useState(null);
 	const [coverImgFile, setCoverImgFile] = useState(null);
 
+	// States for drag and drop functionality
+	const [isDraggingProfile, setIsDraggingProfile] = useState(false);
+	const [isDraggingCover, setIsDraggingCover] = useState(false);
+
 	// Check if logged in user is viewing their own profile
 	const isOwnProfile = user?.id === userData?._id;
 
 	useEffect(() => {
 		getUserData();
-	}, [user]);
+	}, [id]);
 
 	const getUserData = async () => {
 		try {
@@ -78,54 +84,69 @@ const ProfilePage = () => {
 
 	const handleEditToggle = async () => {
 		if (isEditing) {
-			// Create form data to send to server
-			const formData = new FormData();
-
-			// Add basic user data
-			for (const key in editableUser) {
-				if (key !== "profileImg" && key !== "coverImg") {
-					formData.append(key, editableUser[key]);
-				}
-			}
-
-			// Add profile image if changed
-			if (profileImgFile) {
-				formData.append("profileImg", profileImgFile);
-			}
-
-			// Add cover image if changed
-			if (coverImgFile) {
-				formData.append("coverImg", coverImgFile);
-			}
-
 			try {
-				// Submit form data to update profile
-				const response = await axios.put(
-					`user/auth/profile/${id}`,
-					formData,
-					{
-						withCredentials: true,
-						headers: {
-							"Content-Type": "multipart/form-data",
-						},
+				// Create form data to send to server
+				const formData = new FormData();
+
+				// Add basic user data - only send changed fields
+				for (const key in editableUser) {
+					if (
+						key !== "profileImg" &&
+						key !== "coverImg" &&
+						editableUser[key] !== userData[key]
+					) {
+						formData.append(key, editableUser[key]);
 					}
-				);
+				}
 
-				if (response.data.success) {
-					// Update user data with server response
-					setUserData(response.data.data);
-					setEditableUser(response.data.data);
+				// Add profile image if changed
+				if (profileImgFile) {
+					formData.append("profileImg", profileImgFile);
+				}
 
-					// Reset file states
-					setProfileImgFile(null);
-					setCoverImgFile(null);
+				// Add cover image if changed
+				if (coverImgFile) {
+					formData.append("coverImg", coverImgFile);
+				}
+
+				// Only send request if there are changes
+				if ([...formData.entries()].length > 0) {
+					// Submit form data to update profile
+					const response = await axios.put(
+						`user/auth/profile/${id}`,
+						formData,
+						{
+							withCredentials: true,
+							headers: {
+								"Content-Type": "multipart/form-data",
+							},
+						}
+					);
+					if (response.data.success) {
+						// Update user data with server response
+						setUserData(response.data.data);
+						setEditableUser(response.data.data);
+
+						// Reset file states
+						setProfileImgFile(null);
+						setCoverImgFile(null);
+						setIsEditing(!isEditing);
+
+						// Show success message
+						toast.success("Profile updated successfully!");
+					} else {
+						toast.error(
+							"Failed to update profile: " + response.data.message
+						);
+					}
 				}
 			} catch (err) {
 				console.error("Error updating profile:", err);
-				alert("Failed to update profile. Please try again.");
+				toast.error("Failed to update profile. Please try again.");
 			}
 		}
 
+		// Toggle editing state regardless of save outcome
 		setIsEditing(!isEditing);
 	};
 
@@ -137,31 +158,135 @@ const ProfilePage = () => {
 		}));
 	};
 
-	// Handle profile image change
+	// Handle profile image changes (file input)
 	const handleProfileImageChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
-			setProfileImgFile(file);
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				setProfileImgPreview(reader.result);
-			};
-			reader.readAsDataURL(file);
+			processProfileImage(file);
 		}
 	};
 
-	// Handle cover image change
+	// Handle cover image changes (file input)
 	const handleCoverImageChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
-			setCoverImgFile(file);
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				setCoverImgPreview(reader.result);
-			};
-			reader.readAsDataURL(file);
+			processCoverImage(file);
 		}
 	};
+
+	// Process profile image (shared between click upload and drag & drop)
+	const processProfileImage = (file) => {
+		setProfileImgFile(file);
+		const reader = new FileReader();
+		reader.onloadend = () => {
+			setProfileImgPreview(reader.result);
+		};
+		reader.readAsDataURL(file);
+		setIsDraggingProfile(false);
+	};
+
+	// Process cover image (shared between click upload and drag & drop)
+	const processCoverImage = (file) => {
+		setCoverImgFile(file);
+		const reader = new FileReader();
+		reader.onloadend = () => {
+			setCoverImgPreview(reader.result);
+		};
+		reader.readAsDataURL(file);
+		setIsDraggingCover(false);
+	};
+
+	// Drag & Drop handlers for profile image
+	const handleProfileDragEnter = useCallback(
+		(e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			if (isEditing && isOwnProfile) {
+				setIsDraggingProfile(true);
+			}
+		},
+		[isEditing, isOwnProfile]
+	);
+
+	const handleProfileDragLeave = useCallback((e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDraggingProfile(false);
+	}, []);
+
+	const handleProfileDragOver = useCallback(
+		(e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			if (isEditing && isOwnProfile) {
+				setIsDraggingProfile(true);
+			}
+		},
+		[isEditing, isOwnProfile]
+	);
+
+	const handleProfileDrop = useCallback(
+		(e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			if (isEditing && isOwnProfile) {
+				const file = e.dataTransfer.files[0];
+				if (file && file.type.startsWith("image/")) {
+					processProfileImage(file);
+				} else {
+					toast.error("Please drop an image file.");
+					setIsDraggingProfile(false);
+				}
+			}
+		},
+		[isEditing, isOwnProfile]
+	);
+
+	// Drag & Drop handlers for cover image
+	const handleCoverDragEnter = useCallback(
+		(e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			if (isEditing && isOwnProfile) {
+				setIsDraggingCover(true);
+			}
+		},
+		[isEditing, isOwnProfile]
+	);
+
+	const handleCoverDragLeave = useCallback((e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDraggingCover(false);
+	}, []);
+
+	const handleCoverDragOver = useCallback(
+		(e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			if (isEditing && isOwnProfile) {
+				setIsDraggingCover(true);
+			}
+		},
+		[isEditing, isOwnProfile]
+	);
+
+	const handleCoverDrop = useCallback(
+		(e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			if (isEditing && isOwnProfile) {
+				const file = e.dataTransfer.files[0];
+				if (file && file.type.startsWith("image/")) {
+					processCoverImage(file);
+				} else {
+					toast.error("Please drop an image file.");
+					setIsDraggingCover(false);
+				}
+			}
+		},
+		[isEditing, isOwnProfile]
+	);
 
 	const formatDate = (dateString) => {
 		const date = new Date(dateString);
@@ -172,14 +297,46 @@ const ProfilePage = () => {
 		});
 	};
 
-	const handleVerifyAccount = () => {
-		// In a real app, this would send a verification request to the server
-		alert("Verification email sent!");
+	const handleVerifyAccount = async (e) => {
+		e.preventDefault();
+		try {
+			const response = await axios.post(
+				"/user/resend-verification",
+				{ email: userData.email },
+				{
+					withCredentials: true,
+				}
+			);
+			if (response.data.success) {
+				toast.success(
+					"Verification email sent successfully! Please check your inbox."
+				);
+			}
+		} catch (error) {
+			toast.error("Failed to send verification email. Please try again.");
+			console.error("Error sending verification email:", error);
+		}
 	};
 
-	const handleResetPassword = () => {
-		// In a real app, this would send a password reset email
-		alert("Password reset email sent!");
+	const handleResetPassword = async (e) => {
+		e.preventDefault();
+
+		try {
+			const response = await axios.post("/user/forgot-password", {
+				email: userData.email,
+			});
+
+			if (response.data.success) {
+				toast.success(
+					"Password reset link sent successfully! Please check your email."
+				);
+			}
+		} catch (error) {
+			toast.error(
+				"Failed to send password reset link. Please try again."
+			);
+			console.error("Error sending password reset link:", error);
+		}
 	};
 
 	const handleSearch = (e) => {
@@ -205,7 +362,15 @@ const ProfilePage = () => {
 				{/* Main Card */}
 				<div className="bg-white rounded-xl shadow-lg overflow-hidden">
 					{/* Cover Image */}
-					<div className="relative h-56">
+					<div
+						className={`relative h-56 ${
+							isEditing && isOwnProfile ? "cursor-pointer" : ""
+						} ${isDraggingCover ? "bg-black bg-opacity-50" : ""}`}
+						onDragEnter={handleCoverDragEnter}
+						onDragOver={handleCoverDragOver}
+						onDragLeave={handleCoverDragLeave}
+						onDrop={handleCoverDrop}
+					>
 						{coverImgPreview || userData.coverImg ? (
 							<img
 								src={coverImgPreview || userData.coverImg}
@@ -214,6 +379,27 @@ const ProfilePage = () => {
 							/>
 						) : (
 							<div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-700" />
+						)}
+
+						{/* Drag & Drop Overlay for Cover */}
+						{isEditing && isOwnProfile && (
+							<div
+								className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+									isDraggingCover
+										? "opacity-100"
+										: "opacity-0"
+								} bg-black bg-opacity-70`}
+							>
+								<div className="text-center text-white">
+									<Upload
+										size={32}
+										className="mx-auto mb-2"
+									/>
+									<p className="font-medium">
+										Drop image here
+									</p>
+								</div>
+							</div>
 						)}
 
 						{/* Cover Image Edit Button - Only shown in edit mode */}
@@ -256,7 +442,17 @@ const ProfilePage = () => {
 						<div className="w-full lg:w-1/3 px-6 py-6 border-r border-gray-100">
 							{/* Profile Image */}
 							<div className="flex justify-center lg:justify-start -mt-20 mb-6 relative">
-								<div className="relative">
+								<div
+									className={`relative ${
+										isEditing && isOwnProfile
+											? "cursor-pointer"
+											: ""
+									}`}
+									onDragEnter={handleProfileDragEnter}
+									onDragOver={handleProfileDragOver}
+									onDragLeave={handleProfileDragLeave}
+									onDrop={handleProfileDrop}
+								>
 									<div className="w-36 h-36 bg-white rounded-full p-1 shadow-lg">
 										<div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
 											{profileImgPreview ||
@@ -277,6 +473,24 @@ const ProfilePage = () => {
 											)}
 										</div>
 									</div>
+
+									{/* Drag & Drop Overlay for Profile */}
+									{isEditing && isOwnProfile && (
+										<div
+											className={`absolute inset-0 flex items-center justify-center rounded-full transition-opacity ${
+												isDraggingProfile
+													? "opacity-100"
+													: "opacity-0"
+											} bg-black bg-opacity-70`}
+										>
+											<div className="text-center text-white">
+												<Upload
+													size={24}
+													className="mx-auto"
+												/>
+											</div>
+										</div>
+									)}
 
 									{/* Profile Image Edit Button - Only shown in edit mode */}
 									{isOwnProfile && isEditing && (
@@ -459,13 +673,17 @@ const ProfilePage = () => {
 													<input
 														type="text"
 														name="cId"
-														value={editableUser.cId}
+														value={
+															editableUser.cId ||
+															""
+														}
 														onChange={handleChange}
 														className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
 													/>
 												) : (
 													<span className="text-gray-900">
-														{userData.cId}
+														{userData.cId ||
+															"Not set"}
 													</span>
 												)}
 											</div>

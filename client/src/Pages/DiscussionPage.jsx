@@ -325,7 +325,7 @@ const DiscussionPage = () => {
 								<div className="flex items-center">
 									<UserAvatar name={comment?.user?.name} />
 									<span className="font-medium text-gray-900 ml-2">
-										{comment.user.name}
+										{comment?.user?.name}
 									</span>
 								</div>
 								<span className="text-xs text-gray-500 ml-auto">

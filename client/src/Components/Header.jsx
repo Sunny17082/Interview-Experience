@@ -1,5 +1,5 @@
 import React, {  useContext, useEffect, useState } from "react";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, ShieldUser } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UserContext } from "../UserContext";
 import axios from "axios";
@@ -158,10 +158,13 @@ const Header = () => {
 									to={"/dashboard"}
 									className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black"
 								>
-									<User size={20} className="mr-1" />
+									<ShieldUser size={20}/>
 								</Link>
 							)}
-							<Link to={`/profile/${user.id}`} className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black">
+							<Link
+								to={`/profile/${user.id}`}
+								className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black"
+							>
 								{user.name}
 							</Link>
 							<Link

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { UserContext } from "../UserContext";
 
 const DiscussionForm = () => {
 	const [formData, setFormData] = useState({
@@ -20,6 +21,8 @@ const DiscussionForm = () => {
 		start: 0,
 		end: 0,
 	});
+
+	const {user} = useContext(UserContext);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -53,6 +56,14 @@ const DiscussionForm = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		if (!user) {
+			toast.error("Please login to submit your experience.");
+			return;
+		}
+		if (user && user.isVerified === false) {
+			toast.error("Please verify your email before submitting.");
+			return;
+		}
 
 		if (validateForm()) {
 			try {

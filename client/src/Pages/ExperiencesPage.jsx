@@ -79,7 +79,7 @@ const Experiences = () => {
 												<img
 													src={experience.logo}
 													alt={`${experience.companyName} logo`}
-													className="w-26 h-26 object-cover rounded-xl"
+													className="w-30 h-30 object-contain rounded-xl"
 												/>
 											</div>
 

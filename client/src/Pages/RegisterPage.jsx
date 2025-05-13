@@ -1,15 +1,15 @@
 import axios from "axios";
 import React, { useState } from "react";
-import { FaGoogle } from "react-icons/fa";
+import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-
 
 function RegisterPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [name, setName] = useState("");
 	const [errors, setErrors] = useState({});
+	const [showPassword, setShowPassword] = useState(false);
 
 	async function register(ev) {
 		ev.preventDefault();
@@ -23,7 +23,9 @@ function RegisterPage() {
 				}
 			);
 			if (response.status === 201) {
-				toast.success("Registration successful! Please verify your email.");
+				toast.success(
+					"Registration successful! Please verify your email."
+				);
 			}
 		} catch (err) {
 			if (err.response && err.response.data && err.response.data.errors) {
@@ -43,6 +45,10 @@ function RegisterPage() {
 		window.location.href = `${
 			import.meta.env.VITE_API_BASE_URL
 		}/user/auth/google`;
+	}
+
+	function togglePasswordVisibility() {
+		setShowPassword(!showPassword);
 	}
 
 	return (
@@ -97,15 +103,31 @@ function RegisterPage() {
 							<label className="block text-sm font-medium text-gray-700">
 								Password
 							</label>
-							<input
-								name="password"
-								type="Enter your password"
-								required
-								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
-								placeholder="password"
-								value={password}
-								onChange={(ev) => setPassword(ev.target.value)}
-							/>
+							<div className="relative mt-1">
+								<input
+									id="password"
+									name="password"
+									type={showPassword ? "text" : "password"}
+									required
+									className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+									placeholder="Enter your password"
+									value={password}
+									onChange={(ev) =>
+										setPassword(ev.target.value)
+									}
+								/>
+								<button
+									type="button"
+									className="absolute inset-y-0 right-0 pr-3 flex items-center"
+									onClick={togglePasswordVisibility}
+								>
+									{showPassword ? (
+										<FaEyeSlash className="h-5 w-5 text-gray-500" />
+									) : (
+										<FaEye className="h-5 w-5 text-gray-500" />
+									)}
+								</button>
+							</div>
 							{errors.password && (
 								<p className="text-red-500 text-xs mt-1">
 									{errors.password}

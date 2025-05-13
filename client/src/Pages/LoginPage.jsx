@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { FaGoogle } from "react-icons/fa";
+import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
 import { UserContext } from "../UserContext";
 import { toast } from "react-toastify";
@@ -8,8 +8,9 @@ import { toast } from "react-toastify";
 function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [redirect, setRedirect] = useState(false); 
+	const [redirect, setRedirect] = useState(false);
 	const [errors, setErrors] = useState({});
+	const [showPassword, setShowPassword] = useState(false);
 	const { user, setUser } = useContext(UserContext);
 
 	async function login(ev) {
@@ -24,13 +25,14 @@ function LoginPage() {
 			);
 			if (response.status === 200) {
 				setUser(response.data.userData);
-				toast.success("Login successful!"); 
+				toast.success("Login successful!");
 				setRedirect(true);
 			}
 		} catch (err) {
 			if (err.response && err.response.data) {
 				const formattedErrors = {};
-				formattedErrors[err.response.data.path] = err.response.data.message;
+				formattedErrors[err.response.data.path] =
+					err.response.data.message;
 				setErrors(formattedErrors);
 			}
 			toast.error("Login failed!");
@@ -42,6 +44,10 @@ function LoginPage() {
 		window.location.href = `${
 			import.meta.env.VITE_API_BASE_URL
 		}/user/auth/google`;
+	}
+
+	function togglePasswordVisibility() {
+		setShowPassword(!showPassword);
 	}
 
 	if (redirect) {
@@ -78,27 +84,50 @@ function LoginPage() {
 							)}
 						</div>
 						<div>
-							<label
-								htmlFor="password"
-								className="block text-sm font-medium text-gray-700"
-							>
-								Password
-							</label>
-							<input
-								id="password"
-								name="password"
-								type="password"
-								required
-								className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
-								placeholder="Enter your password"
-								value={password}
-								onChange={(ev) => setPassword(ev.target.value)}
-							/>
+							<div className="flex justify-between">
+								<label
+									htmlFor="password"
+									className="block text-sm font-medium text-gray-700"
+								>
+									Password
+								</label>
+							</div>
+							<div className="relative mt-1">
+								<input
+									id="password"
+									name="password"
+									type={showPassword ? "text" : "password"}
+									required
+									className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+									placeholder="Enter your password"
+									value={password}
+									onChange={(ev) =>
+										setPassword(ev.target.value)
+									}
+								/>
+								<button
+									type="button"
+									className="absolute inset-y-0 right-0 pr-3 flex items-center"
+									onClick={togglePasswordVisibility}
+								>
+									{showPassword ? (
+										<FaEyeSlash className="h-5 w-5 text-gray-500" />
+									) : (
+										<FaEye className="h-5 w-5 text-gray-500" />
+									)}
+								</button>
+							</div>
 							{errors.password && (
 								<p className="text-red-500 text-xs mt-1">
 									{errors.password}
 								</p>
 							)}
+							<Link
+								to="/forgotpassword"
+								className="text-sm text-gray-600 hover:text-gray-500"
+							>
+								<div className="w-full text-right">Forgot Password?</div>
+							</Link>
 						</div>
 					</div>
 
@@ -145,5 +174,4 @@ function LoginPage() {
 		</div>
 	);
 }
-
 export default LoginPage;

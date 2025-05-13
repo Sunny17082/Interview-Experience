@@ -17,14 +17,16 @@ const IndexPage = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 
 	const [featuredCompanies, setFeaturedCompanies] = useState([]);
+	const [recentExperiences, setRecentExperiences] = useState([]);
 
 	useEffect(() => {
 		getCompany();
-	}, [])
+		getExperience();
+	}, []);
 
 	const getCompany = async () => {
 		try {
-			const response = await axios.get("/company", {
+			const response = await axios.get("/company/limit/5", {
 				withCredentials: true,
 			});
 			if (response.status === 200) {
@@ -36,41 +38,19 @@ const IndexPage = () => {
 		}
 	};
 
-	const recentExperiences = [
-		{
-			name: "Sunny Prasad",
-			role: "Software Engineer",
-			companyName: "Google",
-			interviewStatus: "Accepted",
-			packageOffered: "60 LPA",
-			rounds: 3,
-			createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-			helpful: new Array(35),
-			views: 300,
-		},
-		{
-			name: "Sunny Prasad",
-			role: "Product Manager",
-			companyName: "Amazon",
-			interviewStatus: "Rejected",
-			packageOffered: "30 LPA",
-			rounds: 2,
-			createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-			helpful: new Array(35),
-			views: 289,
-		},
-		{
-			name: "Sunny Prasad",
-			role: "SDE",
-			companyName: "Microsoft",
-			interviewStatus: "Pending",
-			packageOffered: "20 LPA",
-			rounds: 3,
-			createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-			helpful: new Array(35),
-			views: 170,
-		},
-	];
+	const getExperience = async () => {
+		try {
+			const response = await axios.get("/experience/limit/3", {
+				withCredentials: true,
+			});
+			if (response.status === 200) {
+				setRecentExperiences(response.data.experienceDoc);
+				console.log(response.data.experienceDoc);
+			}
+		} catch (err) {
+			console.error("Error fetching companies:", err);
+		}
+	};
 
 	const handleSearch = (e) => {
 		if (e) e.preventDefault();
@@ -80,7 +60,11 @@ const IndexPage = () => {
 	};
 
 	const getDaysAgo = (date) => {
-		const days = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
+		const parsedDate = new Date(date);
+		if (isNaN(parsedDate)) return "Invalid date";
+		const days = Math.floor(
+			(new Date() - parsedDate) / (1000 * 60 * 60 * 24)
+		);
 		return days === 1 ? "1 day" : `${days} days`;
 	};
 
@@ -202,7 +186,10 @@ const IndexPage = () => {
 									<h3 className="font-semibold text-gray-900 text-sm">
 										{company.name}
 									</h3>
-									<Link to={`/companies/${company._id}`} className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center">
+									<Link
+										to={`/companies/${company._id}`}
+										className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center"
+									>
 										<span className="text-xs text-gray-500">
 											View details
 										</span>
@@ -242,74 +229,67 @@ const IndexPage = () => {
 								key={index}
 								className="bg-white shadow-sm rounded-lg overflow-hidden hover:shadow-md transition-all border border-gray-100"
 							>
-								<div className="p-5">
-									{/* Company and Role */}
-									<div className="flex items-center justify-between mb-4">
-										<div className="flex items-center">
-											<div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center">
-												<Building className="h-4 w-4 text-gray-500" />
+								<Link to={`/experience/${item._id}`}>
+									<div className="p-5">
+										{/* Company and Role */}
+										<div className="flex items-center justify-between mb-4">
+											<div className="flex items-center">
+												<div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center">
+													<Building className="h-4 w-4 text-gray-500" />
+												</div>
+												<div className="ml-3">
+													<h3 className="font-medium text-gray-900 text-sm">
+														{item?.role}
+													</h3>
+													<p className="text-xs text-gray-500">
+														at {item?.companyName}
+													</p>
+												</div>
 											</div>
-											<div className="ml-3">
-												<h3 className="font-medium text-gray-900 text-sm">
-													{item.role}
-												</h3>
-												<p className="text-xs text-gray-500">
-													at {item.companyName}
-												</p>
+											<span
+												className={`text-xs px-2 py-0.5 rounded-full ${
+													item?.interviewStatus ===
+													"offered"
+														? "bg-green-100 text-green-800"
+														: item?.interviewStatus ===
+														  "Rejected"
+														? "bg-red-100 text-red-800"
+														: "bg-yellow-100 text-yellow-800"
+												}`}
+											>
+												{item?.interviewStatus}
+											</span>
+										</div>
+
+										{/* Core Information - Just the essentials */}
+										<div className="grid grid-cols-2 gap-3 mb-4 text-xs">
+											<div className="bg-gray-50 p-2 rounded border border-gray-100">
+												<span className="block text-gray-500">
+													Package
+												</span>
+												<span className="font-medium text-gray-800">
+													{item?.packageOffered}
+												</span>
+											</div>
+											<div className="bg-gray-50 p-2 rounded border border-gray-100">
+												<span className="block text-gray-500">
+													Rounds
+												</span>
+												<span className="font-medium text-gray-800">
+													{item?.rounds?.length}
+												</span>
 											</div>
 										</div>
-										<span
-											className={`text-xs px-2 py-0.5 rounded-full ${
-												item.interviewStatus ===
-												"Accepted"
-													? "bg-green-100 text-green-800"
-													: item.interviewStatus ===
-													  "Rejected"
-													? "bg-red-100 text-red-800"
-													: "bg-yellow-100 text-yellow-800"
-											}`}
-										>
-											{item.interviewStatus}
-										</span>
-									</div>
 
-									{/* Core Information - Just the essentials */}
-									<div className="grid grid-cols-2 gap-3 mb-4 text-xs">
-										<div className="bg-gray-50 p-2 rounded border border-gray-100">
-											<span className="block text-gray-500">
-												Package
-											</span>
-											<span className="font-medium text-gray-800">
-												{item.packageOffered}
-											</span>
-										</div>
-										<div className="bg-gray-50 p-2 rounded border border-gray-100">
-											<span className="block text-gray-500">
-												Rounds
-											</span>
-											<span className="font-medium text-gray-800">
-												{item.rounds}
+										{/* Stats and Date */}
+										<div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
+											<span>
+												{getDaysAgo(item?.createdAt)}{" "}
+												ago
 											</span>
 										</div>
 									</div>
-
-									{/* Stats and Date */}
-									<div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
-										<span>
-											{getDaysAgo(item.createdAt)} ago
-										</span>
-										<div className="flex items-center gap-3">
-											<span className="flex items-center">
-												<TrendingUp className="h-3 w-3 mr-1 text-gray-400" />
-												{item.helpful.length}
-											</span>
-											<span className="flex items-center">
-												<Eye className="h-3 w-3 mr-1 text-gray-400" />
-												{item.views}
-											</span>
-										</div>
-									</div>
-								</div>
+								</Link>
 							</div>
 						))}
 					</div>

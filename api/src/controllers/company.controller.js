@@ -49,6 +49,31 @@ const handleGetCompany = async (req, res) => {
 	}
 };
 
+const handleGetCompanyByLimit = async (req, res) => {
+	const { limit } = req.query;
+	console.log(limit);
+	try {
+		const companyDoc = await Company.find({}).limit(5);
+		if (!companyDoc) {
+			return res.status(404).json({
+				success: false,
+				message: "Company not found",
+			});
+		}
+		return res.status(200).json({
+			success: true,
+			companyDoc,
+			message: "Company fetched successfully",
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({
+			success: false,
+			message: "Internal server error",
+		});
+	}
+};
+
 const handleGetCompanyById = async (req, res) => {
 	try {
 		const { id } = req.params;
@@ -134,4 +159,5 @@ module.exports = {
 	handleGetCompanyById,
 	handleUpdateCompany,
 	handleDeleteCompany,
+	handleGetCompanyByLimit,
 };

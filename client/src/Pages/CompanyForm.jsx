@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useParams, useNavigate } from "react-router-dom";
+import { UserContext } from "../UserContext";
 
 const CompanyForm = () => {
 	const { id } = useParams();
@@ -21,6 +22,9 @@ const CompanyForm = () => {
 			gap: "",
 		},
 	});
+
+	const { user } = useContext(UserContext);
+
 
 	// Fetch company data if ID is provided (edit mode)
 	useEffect(() => {
@@ -93,6 +97,18 @@ const CompanyForm = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setIsLoading(true);
+		if (!user) {
+			toast.error("Please login to submit your experience.");
+			return;
+		}
+		if (user && user.isVerified === false) {
+			toast.error("Please verify your email before submitting.");
+			return;
+		}
+		if (user && user.role !== "admin") {
+			toast.error("You are not authorized to add a company.");
+			return;
+		}
 		try {
 			let response;
 

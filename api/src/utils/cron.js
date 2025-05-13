@@ -1,8 +1,8 @@
 const cron = require("node-cron");
 const Experience = require("../models/experience.model");
+const Jobs = require("../models/jobs.model");
 
 const initCronJobs = () => {
-	// Run every hour to check for experiences scheduled for deletion
 	cron.schedule("0 * * * *", async () => {
 		console.log(
 			"Running scheduled task: checking experiences for deletion"
@@ -52,7 +52,31 @@ const initCronJobs = () => {
 		}
 	});
 
-	// You can add additional cron jobs here
+	cron.schedule("0 * * * *", async () => {
+		console.log("Running scheduled task: cleaning up expired job postings");
+		try {
+			const now = new Date();
+
+			// Calculate the date that's 1 week ago from now
+			const oneWeekAgo = new Date();
+			oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+			// Find and delete jobs whose application deadline has passed by more than a week
+			const result = await Jobs.deleteMany({
+				applicationDeadline: { $lt: oneWeekAgo },
+			});
+
+			if (result.deletedCount > 0) {
+				console.log(
+					`Deleted ${result.deletedCount} job postings with deadlines older than 1 week`
+				);
+			} else {
+				console.log("No expired job postings found for deletion");
+			}
+		} catch (err) {
+			console.error("Error in scheduled job cleanup task:", err);
+		}
+	});
 
 	console.log("All cron jobs initialized");
 };

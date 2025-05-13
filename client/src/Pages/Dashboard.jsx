@@ -33,13 +33,14 @@ const Dashboard = () => {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [userSearchBy, setUserSearchBy] = useState("name");
 	const [companySearchTerm, setCompanySearchTerm] = useState("");
+	const [loggedInUser, setLoggedInUser] = useState(null);
 
 	const [companies, setCompanies] = useState([]);
 	const [users, setUsers] = useState([]);
 	// Track which role is being edited for which user
 	const [editingRoleForUser, setEditingRoleForUser] = useState(null);
 	const [tempRole, setTempRole] = useState("");
-	const roles = ["user", "admin", "maintainer"];
+	const roles = ["user", "admin"];
 	const [stats, setStats] = useState({
 		users: 0,
 		discussions: 0,
@@ -57,6 +58,7 @@ const Dashboard = () => {
 		if (!user || user?.role !== "admin") {
 			navigate("/");
 		}
+		setLoggedInUser(user);
 	}, [user, navigate]);
 
 	useEffect(() => {
@@ -127,6 +129,18 @@ const Dashboard = () => {
 	};
 
 	const submitRoleChange = async (userId) => {
+		if (!user) {
+			toast.error("Please login to submit your experience.");
+			return;
+		}
+		if (user && user.isVerified === false) {
+			toast.error("Please verify your email before submitting.");
+			return;
+		}
+		if(user && user.role !== "admin") {
+			toast.error("You are not authorized to perform this action.");
+			return;
+		};
 		try {
 			const response = await axios.post(
 				`/user/auth/role/${userId}`,
@@ -484,9 +498,6 @@ const Dashboard = () => {
 											</option>
 											<option value="user">User</option>
 											<option value="admin">Admin</option>
-											<option value="maintainer">
-												Maintainer
-											</option>
 										</select>
 									</div>
 
@@ -666,8 +677,6 @@ const Dashboard = () => {
                                 ${
 									user.role === "admin"
 										? "bg-gray-100 text-gray-800"
-										: user.role === "maintainer"
-										? "bg-gray-800 text-white"
 										: "bg-gray-200 text-gray-800"
 								}`}
 															>
@@ -677,27 +686,37 @@ const Dashboard = () => {
 													)}
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-													<div className="flex items-center space-x-2">
-														{editingRoleForUser !==
-															user._id && (
-															<button
-																onClick={() =>
-																	startEditingRole(
-																		user._id,
-																		user.role
-																	)
-																}
-																className="text-gray-600 hover:text-gray-900 focus:outline-none"
-															>
-																<Edit
-																	size={16}
-																/>
-															</button>
+													{loggedInUser &&
+														loggedInUser.email !==
+															user.email && (
+															<div className="flex items-center space-x-2">
+																{editingRoleForUser !==
+																	user._id && (
+																	<button
+																		onClick={() =>
+																			startEditingRole(
+																				user._id,
+																				user.role
+																			)
+																		}
+																		className="text-gray-600 hover:text-gray-900 focus:outline-none"
+																	>
+																		<Edit
+																			size={
+																				16
+																			}
+																		/>
+																	</button>
+																)}
+																<button className="text-gray-600 hover:text-red-600 focus:outline-none">
+																	<Trash
+																		size={
+																			16
+																		}
+																	/>
+																</button>
+															</div>
 														)}
-														<button className="text-gray-600 hover:text-red-600 focus:outline-none">
-															<Trash size={16} />
-														</button>
-													</div>
 												</td>
 											</tr>
 										))}
@@ -779,7 +798,9 @@ const Dashboard = () => {
 													</div>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-													<Link to={`/company/edit/${company._id}`}>
+													<Link
+														to={`/company/edit/${company._id}`}
+													>
 														<button className="text-gray-600 hover:text-gray-900 mr-3">
 															<Edit size={16} />
 														</button>
