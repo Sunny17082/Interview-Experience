@@ -20,7 +20,7 @@ import ResourceForm from "./Pages/ResourceForm";
 import Dashboard from "./Pages/Dashboard";
 import JobsForm from "./Pages/JobsForm";
 import JobsPage from "./Pages/JobsPage";
-import ProfilePage from "./Pages/profilePage";
+import ProfilePage from "./Pages/ProfilePage";
 import ForgotPassword from "./Pages/ForgotPassword";
 import ResetPassword from "./Pages/ResetPassword";
 import VerifyEmail from "./Pages/VerifyEmail";
