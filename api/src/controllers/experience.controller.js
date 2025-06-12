@@ -83,8 +83,13 @@ const handlePostExperience = async (req, res) => {
 
 const handleGetExperience = async (req, res) => {
 	try {
-		const experienceDoc = await Experience.find({});
-		if (!experienceDoc) {
+		// Only get experiences that are not unlisted
+		const experienceDoc = await Experience.find({
+			unlisted: { $ne: true },
+		}).select(
+			"name companyName role interviewStatus packageOffered rounds logo"
+		);
+		if (!experienceDoc || experienceDoc.length === 0) {
 			return res
 				.status(404)
 				.json({ success: false, message: "No experience found" });
@@ -207,14 +212,24 @@ const handlePostComment = async (req, res) => {
 			createdAt: new Date(),
 		});
 		await experienceDoc.save();
-		sendMail(
-			user.name,
-			user.email,
-			"Somone commented on your experience",
-			`Your experience for ${experienceDoc.companyName} has a new comment`,
-			"View Experience",
-			`${process.env.FRONTEND_URL}/experience/${experienceDoc._id}`
-		);
+
+		// Get the experience author to send notification
+		const experienceAuthor = await User.findById(experienceDoc.user);
+		if (
+			experienceAuthor &&
+			experienceAuthor.email &&
+			experienceAuthor._id.toString() !== user._id.toString()
+		) {
+			sendMail(
+				experienceAuthor.name,
+				experienceAuthor.email,
+				"Someone commented on your experience",
+				`Your experience for ${experienceDoc.companyName} has a new comment from ${user.name}`,
+				"View Experience",
+				`${process.env.FRONTEND_URL}/experience/${experienceDoc._id}`
+			);
+		}
+
 		return res.status(201).json({
 			success: true,
 			message: "Comment added successfully",
@@ -233,7 +248,7 @@ const handlePostComment = async (req, res) => {
 const handleReport = async (req, res) => {
 	const { id } = req.params;
 	const { token } = req.cookies;
-	const { reason } = req.body;
+	const { reason, details } = req.body;
 
 	try {
 		if (!token) {
@@ -249,6 +264,24 @@ const handleReport = async (req, res) => {
 				.json({ success: false, message: "Unauthorized" });
 		}
 
+		// Validate reason
+		const validReasons = [
+			"spam",
+			"inappropriate_content",
+			"offensive_language",
+			"misleading_information",
+			"privacy_violation",
+			"duplicate_content",
+			"other",
+		];
+
+		if (!reason || !validReasons.includes(reason)) {
+			return res.status(400).json({
+				success: false,
+				message: "Invalid or missing report reason",
+			});
+		}
+
 		const experienceDoc = await Experience.findById(id);
 		if (!experienceDoc) {
 			return res
@@ -261,26 +294,71 @@ const handleReport = async (req, res) => {
 			experienceDoc.reporters = [];
 		}
 
-		if (experienceDoc.reporters.includes(user.id)) {
+		const hasReported = experienceDoc.reporters.some(
+			(reporter) =>
+				reporter.user && reporter.user.toString() === user.id.toString()
+		);
+
+		if (hasReported) {
 			return res.status(400).json({
 				success: false,
 				message: "You have already reported this experience",
 			});
 		}
 
-		// Add user to reporters list
-		experienceDoc.reporters.push(user.id);
+		// Add user to reporters list with reason and details
+		experienceDoc.reporters.push({
+			user: user.id,
+			reason: reason,
+			details: details || "",
+			reportedAt: new Date(),
+		});
 
 		// Increment report count
 		experienceDoc.report += 1;
 
-		// If report count reaches 3, send email to author and set deletion date
-		if (experienceDoc.report === 3) {
+		// If report count reaches 3, unlist the experience and send email to author
+		if (experienceDoc.report >= 3) {
 			const author = await User.findById(experienceDoc.user);
+
+			// Unlist the experience immediately
+			experienceDoc.unlisted = true;
+			experienceDoc.reportedAt = new Date();
+			experienceDoc.scheduledForDeletion = new Date(
+				Date.now() + 60 * 1000 * 60 * 24
+			); // 24 hours
+			experienceDoc.contentUpdatedAt = null;
+
 			if (author && author.email) {
-				const subject = "Your post has been reported multiple times";
-				const content = `Your interview experience for ${experienceDoc.companyName} (${experienceDoc.role}) has been reported by multiple users.
-        		Please review and update your post within 24 hours or it will be automatically removed.`;
+				// Generate report reasons summary for email
+				const reportReasons = experienceDoc.reporters
+					.map((reporter) => {
+						const reasonLabels = {
+							spam: "Spam",
+							inappropriate_content: "Inappropriate Content",
+							offensive_language: "Offensive Language",
+							misleading_information: "Misleading Information",
+							privacy_violation: "Privacy Violation",
+							duplicate_content: "Duplicate Content",
+							other: "Other",
+						};
+
+						return `• ${
+							reasonLabels[reporter.reason] || reporter.reason
+						}${reporter.details ? `: ${reporter.details}` : ""}`;
+					})
+					.join("\n");
+
+				const subject = "Your post has been unlisted due to reports";
+				const content = `Your interview experience for ${experienceDoc.companyName} (${experienceDoc.role}) has been reported by multiple users and has been temporarily unlisted.</br>
+
+								The following issues were reported:</br>
+								${reportReasons}</br>
+
+								Please review and update your post within 24 hours to address these concerns and get it relisted, or it will be permanently removed.
+
+								If you believe these reports are unfounded, please contact our support team.`;
+
 				const cta = "Review Post";
 				const link = `${process.env.FRONTEND_URL}/experience/${experienceDoc._id}`;
 
@@ -292,25 +370,25 @@ const handleReport = async (req, res) => {
 					cta,
 					link
 				);
-
-				// Set scheduled deletion date
-				experienceDoc.scheduledForDeletion = new Date(
-					Date.now() + 60 * 1000 * 60 * 24
-				);
-
-				// Record the time of reporting
-				experienceDoc.reportedAt = new Date();
-
-				// Initialize contentUpdatedAt as null (not updated yet)
-				experienceDoc.contentUpdatedAt = null;
 			}
 		}
 
 		await experienceDoc.save();
 
+		// Get reason label for response
+		const reasonLabels = {
+			spam: "Spam",
+			inappropriate_content: "Inappropriate Content",
+			offensive_language: "Offensive Language",
+			misleading_information: "Misleading Information",
+			privacy_violation: "Privacy Violation",
+			duplicate_content: "Duplicate Content",
+			other: "Other",
+		};
+
 		return res.status(200).json({
 			success: true,
-			message: "Experience reported successfully",
+			message: `Experience reported for: ${reasonLabels[reason]}. Thank you for helping keep our community safe.`,
 		});
 	} catch (err) {
 		console.error("Error in handleReport:", err.message);
@@ -366,17 +444,18 @@ const handleUpdateExperience = async (req, res) => {
 				key !== "reporters" &&
 				key !== "reportedAt" &&
 				key !== "contentUpdatedAt" &&
-				key !== "scheduledForDeletion"
+				key !== "scheduledForDeletion" &&
+				key !== "unlisted"
 			) {
 				experienceDoc[key] = updateData[key];
 			}
 		});
 
 		// Update sentiment analysis if overallFeedback was changed
-		if (updateData.overallFeedback) {
-			const feedbackSentiment = sentiment.analyze(
-				updateData.overallFeedback
-			);
+		if (updateData.overallFeedback !== undefined) {
+			const feedbackSentiment = updateData.overallFeedback
+				? sentiment.analyze(updateData.overallFeedback)
+				: { score: 0, comparative: 0 };
 			experienceDoc.feedbackSentiment = {
 				score: feedbackSentiment.score,
 				comparative: feedbackSentiment.comparative,
@@ -384,21 +463,25 @@ const handleUpdateExperience = async (req, res) => {
 			};
 		}
 
-		// If this was a content update (not just comments) and experience is reported
+		// If this was a content update and experience was reported/unlisted
 		if (
 			contentChanged &&
-			experienceDoc.reportedAt &&
-			experienceDoc.scheduledForDeletion
+			experienceDoc.unlisted &&
+			experienceDoc.reportedAt
 		) {
 			// Set content update timestamp
 			experienceDoc.contentUpdatedAt = new Date();
 
-			// Notify author that their post has been saved from deletion
+			// Relist the experience
+			experienceDoc.unlisted = false;
+			experienceDoc.scheduledForDeletion = null;
+
+			// Notify author that their post has been relisted
 			const author = await User.findById(experienceDoc.user);
 			if (author && author.email) {
-				const subject = "Your reported post has been saved";
+				const subject = "Your reported post has been relisted";
 				const content = `Thank you for updating your interview experience for ${experienceDoc.companyName}. 
-        The changes you made have addressed the reports, and your post will no longer be removed.`;
+				The changes you made have addressed the reports, and your post is now visible again.`;
 				const cta = "View Your Post";
 				const link = `${process.env.FRONTEND_URL}/experience/${experienceDoc._id}`;
 
@@ -431,7 +514,10 @@ const handleUpdateExperience = async (req, res) => {
 const handleGetExperienceByLimit = async (req, res) => {
 	const { limit } = req.query;
 	try {
-		const experienceDoc = await Experience.find({}).sort({ createdAt: -1 }).limit(3);
+		// Only get experiences that are not unlisted
+		const experienceDoc = await Experience.find({ unlisted: { $ne: true } })
+			.sort({ createdAt: -1 })
+			.limit(parseInt(limit) || 3);
 		if (!experienceDoc || experienceDoc.length === 0) {
 			return res
 				.status(404)
@@ -457,7 +543,7 @@ const handleDeleteExperience = async (req, res) => {
 				.status(401)
 				.json({ success: false, message: "Unauthorized" });
 		}
-		const user = verifyUserFromToken(token);
+		const user = await verifyUserFromToken(token);
 		if (!user) {
 			return res
 				.status(401)

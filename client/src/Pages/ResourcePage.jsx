@@ -224,7 +224,7 @@ const ResourcePage = () => {
 			}
 		} catch (err) {
 			toast.error("Error updating dislike");
-			console.error("Error disliking resource:", err);
+			console.error("Error disliking resource:", err); 
 		}
 	};
 

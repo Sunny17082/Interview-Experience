@@ -35,6 +35,36 @@ const RoundSchema = new mongoose.Schema({
 	questions: [QuestionSchema],
 });
 
+const ReporterSchema = new mongoose.Schema({
+	user: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: "User",
+		required: true,
+	},
+	reason: {
+		type: String,
+		enum: [
+			"spam",
+			"inappropriate_content",
+			"offensive_language",
+			"misleading_information",
+			"privacy_violation",
+			"duplicate_content",
+			"other",
+		],
+		required: true,
+	},
+	details: {
+		type: String,
+		default: "",
+		maxlength: 500,
+	},
+	reportedAt: {
+		type: Date,
+		default: Date.now,
+	},
+});
+
 const experienceSchema = new mongoose.Schema(
 	{
 		user: {
@@ -98,15 +128,14 @@ const experienceSchema = new mongoose.Schema(
 			type: Number,
 			default: 0,
 		},
-		reporters: [
-			{
-				type: mongoose.Schema.Types.ObjectId,
-				ref: "User",
-			},
-		],
+		reporters: [ReporterSchema],
 		scheduledForDeletion: {
 			type: Date,
 			default: null,
+		},
+		unlisted: {
+			type: Boolean,
+			default: false,
 		},
 		reportedAt: {
 			type: Date,

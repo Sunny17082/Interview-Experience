@@ -1,6 +1,6 @@
-import React, {  useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Menu, X, ShieldUser } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { UserContext } from "../UserContext";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -9,6 +9,29 @@ const Header = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeItem, setActiveItem] = useState("Home");
 	const { user, setUser } = useContext(UserContext);
+	const location = useLocation();
+
+	// Update active item based on current route
+	useEffect(() => {
+		const path = location.pathname;
+		if (path === "/") {
+			setActiveItem("Home");
+		} else if (path.startsWith("/companies")) {
+			setActiveItem("Companies");
+		} else if (path.startsWith("/discussion")) {
+			setActiveItem("Discussion");
+		} else if (path.startsWith("/resources")) {
+			setActiveItem("Resources");
+		} else if (path.startsWith("/experience")) {
+			setActiveItem("Experience");
+		} else if (path.startsWith("/jobs")) {
+			setActiveItem("Jobs");
+		} else {
+			// For routes like /login, /register, /profile, /dashboard, etc.
+			// Don't highlight any main navigation item
+			setActiveItem("");
+		}
+	}, [location.pathname]);
 
 	useEffect(() => {
 		handleGetUser();
@@ -44,6 +67,7 @@ const Header = () => {
 
 	const handleItemClick = (item) => {
 		setActiveItem(item);
+		setIsOpen(false); // Close mobile menu when item is clicked
 	};
 
 	return (
@@ -158,7 +182,7 @@ const Header = () => {
 									to={"/dashboard"}
 									className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-black"
 								>
-									<ShieldUser size={20}/>
+									<ShieldUser size={20} />
 								</Link>
 							)}
 							<Link
@@ -193,8 +217,8 @@ const Header = () => {
 			{isOpen && (
 				<div className="md:hidden absolute w-full bg-white shadow-lg z-50">
 					<div className="pt-2 pb-3 space-y-1">
-						<a
-							href="#"
+						<Link
+							to={"/"}
 							className={`block pl-3 pr-4 py-2 text-base font-medium ${
 								activeItem === "Home"
 									? "bg-gray-100 border-l-4 border-black text-gray-900"
@@ -203,9 +227,9 @@ const Header = () => {
 							onClick={() => handleItemClick("Home")}
 						>
 							Home
-						</a>
-						<a
-							href="#"
+						</Link>
+						<Link
+							to={"/companies"}
 							className={`block pl-3 pr-4 py-2 text-base font-medium ${
 								activeItem === "Companies"
 									? "bg-gray-100 border-l-4 border-black text-gray-900"
@@ -214,9 +238,9 @@ const Header = () => {
 							onClick={() => handleItemClick("Companies")}
 						>
 							Companies
-						</a>
-						<a
-							href="#"
+						</Link>
+						<Link
+							to={"/discussion"}
 							className={`block pl-3 pr-4 py-2 text-base font-medium ${
 								activeItem === "Discussion"
 									? "bg-gray-100 border-l-4 border-black text-gray-900"
@@ -225,9 +249,9 @@ const Header = () => {
 							onClick={() => handleItemClick("Discussion")}
 						>
 							Discussion
-						</a>
-						<a
-							href="#"
+						</Link>
+						<Link
+							to={"/resources"}
 							className={`block pl-3 pr-4 py-2 text-base font-medium ${
 								activeItem === "Resources"
 									? "bg-gray-100 border-l-4 border-black text-gray-900"
@@ -236,9 +260,9 @@ const Header = () => {
 							onClick={() => handleItemClick("Resources")}
 						>
 							Resources
-						</a>
-						<a
-							href="#"
+						</Link>
+						<Link
+							to={"/experience"}
 							className={`block pl-3 pr-4 py-2 text-base font-medium ${
 								activeItem === "Experience"
 									? "bg-gray-100 border-l-4 border-black text-gray-900"
@@ -247,7 +271,18 @@ const Header = () => {
 							onClick={() => handleItemClick("Experience")}
 						>
 							Experience
-						</a>
+						</Link>
+						<Link
+							to={"/jobs"}
+							className={`block pl-3 pr-4 py-2 text-base font-medium ${
+								activeItem === "Jobs"
+									? "bg-gray-100 border-l-4 border-black text-gray-900"
+									: "border-l-4 border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+							}`}
+							onClick={() => handleItemClick("Jobs")}
+						>
+							Jobs
+						</Link>
 					</div>
 					<div className="pt-4 pb-3 border-t border-gray-200">
 						{!user && (
@@ -262,7 +297,7 @@ const Header = () => {
 								</div>
 								<div className="ml-3">
 									<Link
-										to={"register"}
+										to={"/register"}
 										className="block px-3 py-2 text-base font-medium text-white bg-black rounded-md hover:bg-gray-800"
 									>
 										Register
@@ -272,8 +307,21 @@ const Header = () => {
 						)}
 						{user && (
 							<div className="flex items-center px-4">
+								{user.role === "admin" && (
+									<div className="flex-shrink-0">
+										<Link
+											to={"/dashboard"}
+											className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black"
+										>
+											<ShieldUser size={20} />
+										</Link>
+									</div>
+								)}
 								<div className="flex-shrink-0">
-									<Link className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black">
+									<Link
+										to={`/profile/${user.id}`}
+										className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-black"
+									>
 										{user.name}
 									</Link>
 								</div>
@@ -293,5 +341,4 @@ const Header = () => {
 		</nav>
 	);
 };
-
 export default Header;

@@ -3,7 +3,7 @@ const Experience = require("../models/experience.model");
 const Jobs = require("../models/jobs.model");
 
 const initCronJobs = () => {
-	cron.schedule("0 * * * *", async () => {
+	cron.schedule("* * * * *", async () => {
 		console.log(
 			"Running scheduled task: checking experiences for deletion"
 		);

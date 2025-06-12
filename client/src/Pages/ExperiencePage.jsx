@@ -7,6 +7,7 @@ import { UserContext } from "../UserContext";
 import { MessageCircle, Send, User, Clock, Edit, Trash } from "lucide-react";
 import DeleteConfirmationModal from "../Components/DeleteConfirmationModal";
 import { Link } from "react-router-dom";
+import ReportModal from "../Components/ReportModal";
 
 const ExperiencePage = () => {
 	const { id } = useParams();
@@ -24,6 +25,8 @@ const ExperiencePage = () => {
 	const [comments, setComments] = useState([]);
 	const [comment, setComment] = useState("");
 	const [loadingComments, setLoadingComments] = useState(true);
+	const [showReportModal, setShowReportModal] = useState(false);
+	const [isReportingLoading, setIsReportingLoading] = useState(false);
 
 	const navigate = useNavigate();
 
@@ -164,13 +167,23 @@ const ExperiencePage = () => {
 		}
 	}
 
-	const handleReport = async () => {
+	const handleReport = async (reportData) => {
+		setIsReportingLoading(true);
 		try {
-			const response = await axios.post(`/experience/${id}/report`, {
-				withCredentials: true,
-			});
+			const response = await axios.post(
+				`/experience/${id}/report`,
+				{
+					reason: reportData.reason,
+					details: reportData.details,
+				},
+				{
+					withCredentials: true,
+				}
+			);
+
 			if (response.status === 200) {
 				toast.success(response.data.message);
+				setShowReportModal(false);
 			} else {
 				toast.error(response.data.message);
 			}
@@ -179,6 +192,8 @@ const ExperiencePage = () => {
 			toast.error(
 				err.response?.data?.message || "Failed to report experience"
 			);
+		} finally {
+			setIsReportingLoading(false);
 		}
 	};
 
@@ -383,7 +398,7 @@ const ExperiencePage = () => {
 						{isHelpful ? "Helpful!" : "Helpful"}
 					</button>
 					<button
-						onClick={handleReport}
+						onClick={() => setShowReportModal(true)} // Change this line
 						className="px-3 py-1 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
 					>
 						<svg
@@ -892,6 +907,12 @@ const ExperiencePage = () => {
 					</button>
 				</form>
 			</div>
+			<ReportModal
+				isOpen={showReportModal}
+				onClose={() => setShowReportModal(false)}
+				onSubmit={handleReport}
+				isLoading={isReportingLoading}
+			/>
 		</div>
 	);
 };
