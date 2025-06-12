@@ -285,9 +285,7 @@ const handleGetUser = (req, res) => {
 	const { token } = req.cookies;
 	try {
 		if (!token || token === "") {
-			return res
-				.status(401)
-				.json({ success: false, message: "Unauthorized" });
+			return res.json({ success: false, message: "Unauthorized" });
 		}
 		const user = jwt.verify(token, jwtSecret);
 		return res.status(200).json({ success: true, user });
