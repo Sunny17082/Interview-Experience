@@ -172,7 +172,7 @@ const IndexPage = () => {
 					</div>
 
 					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-						{featuredCompanies.map((company) => (
+						{featuredCompanies && featuredCompanies?.map((company) => (
 							<div
 								key={company.name}
 								className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer hover:translate-y-px"
@@ -224,7 +224,7 @@ const IndexPage = () => {
 					</div>
 
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-						{recentExperiences.map((item, index) => (
+						{recentExperiences  && recentExperiences?.map((item, index) => (
 							<div
 								key={index}
 								className="bg-white shadow-sm rounded-lg overflow-hidden hover:shadow-md transition-all border border-gray-100"
