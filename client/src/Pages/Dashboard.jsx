@@ -16,11 +16,14 @@ import {
 	Trash,
 	Pen,
 	Check,
+	LogOut,
 	X as XIcon,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserContext } from "../UserContext";
 import axios from "axios";
+import DeleteConfirmationModal from "../Components/DeleteConfirmationModal";
+import { toast } from "react-toastify";
 
 const Dashboard = () => {
 	const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -34,9 +37,12 @@ const Dashboard = () => {
 	const [userSearchBy, setUserSearchBy] = useState("name");
 	const [companySearchTerm, setCompanySearchTerm] = useState("");
 	const [loggedInUser, setLoggedInUser] = useState(null);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deleteExperienceId, setDeleteExperienceId] = useState(null);
 
 	const [companies, setCompanies] = useState([]);
 	const [users, setUsers] = useState([]);
+	const [reportedContent, setReportedContent] = useState([]);
 	// Track which role is being edited for which user
 	const [editingRoleForUser, setEditingRoleForUser] = useState(null);
 	const [tempRole, setTempRole] = useState("");
@@ -62,10 +68,30 @@ const Dashboard = () => {
 	}, [user, navigate]);
 
 	useEffect(() => {
-		getDashboardData();
-		getCompany();
-		getUser();
-	}, []);
+		if (activeTab === "overview") {
+			getDashboardData();
+		} else if (activeTab === "users") {
+			getUser();
+		} else if (activeTab === "companies") {
+			getCompany();
+		} else if (activeTab === "reported") {
+			getReportedContent();
+		}
+	}, [activeTab]);
+
+	const getReportedContent = async () => {
+		try {
+			// Change the endpoint to match your backend route
+			const response = await axios.get("/experience/reported", {
+				withCredentials: true,
+			});
+			if (response.status === 200) {
+				setReportedContent(response.data.data);
+			}
+		} catch (err) {
+			console.error("Error fetching reported content:", err);
+		}
+	};
 
 	const getCompany = async () => {
 		try {
@@ -106,6 +132,19 @@ const Dashboard = () => {
 		}
 	};
 
+	const handleDeleteExperience = async () => {
+		const id = deleteExperienceId;
+		const response = await axios.delete(`/experience/${id}`, {
+			withCredentials: true,
+		});
+		if (response.status === 200) {
+			toast.success("Experience deleted successfully.");
+		}
+		setShowDeleteModal(false);
+		setDeleteExperienceId(null);
+		getReportedContent();
+	};
+
 	const toggleSidebar = () => {
 		setSidebarOpen(!sidebarOpen);
 	};
@@ -137,10 +176,10 @@ const Dashboard = () => {
 			toast.error("Please verify your email before submitting.");
 			return;
 		}
-		if(user && user.role !== "admin") {
+		if (user && user.role !== "admin") {
 			toast.error("You are not authorized to perform this action.");
 			return;
-		};
+		}
 		try {
 			const response = await axios.post(
 				`/user/auth/role/${userId}`,
@@ -166,6 +205,26 @@ const Dashboard = () => {
 			console.error("Error updating role:", err);
 			// Show error message to user
 			alert("Failed to update role. Please try again.");
+		}
+	};
+
+	const handleListExperience = async (experienceId) => {
+		try {
+			// Change the endpoint to match your backend route
+			const response = await axios.post(
+				`/experience/list/${experienceId}`,
+				{},
+				{ withCredentials: true }
+			);
+
+			if (response.status === 200) {
+				alert("Experience has been relisted successfully!");
+				// Refresh the reported content
+				getReportedContent();
+			}
+		} catch (err) {
+			console.error("Error listing experience:", err);
+			alert("Failed to list experience. Please try again.");
 		}
 	};
 
@@ -306,6 +365,36 @@ const Dashboard = () => {
 								)}
 							</button>
 						</li>
+						<li>
+							<button
+								onClick={() => setActiveTab("reported")}
+								className={`flex items-center w-full p-4 ${
+									activeTab === "reported"
+										? "bg-gray-800"
+										: "hover:bg-gray-800"
+								}`}
+							>
+								<MessageSquare size={20} />
+								{sidebarOpen && (
+									<span className="ml-4">
+										Reported Content
+									</span>
+								)}
+							</button>
+						</li>
+						<li>
+							<Link
+								to="/"
+								className="flex items-center w-full p-4 hover:bg-gray-800"
+							>
+								<LogOut size={20} />
+								{sidebarOpen && (
+									<span className="ml-4">
+										Return to Homepage
+									</span>
+								)}
+							</Link>
+						</li>
 					</ul>
 				</nav>
 			</div>
@@ -318,6 +407,7 @@ const Dashboard = () => {
 							{activeTab === "overview" && "Dashboard Overview"}
 							{activeTab === "users" && "User Management"}
 							{activeTab === "companies" && "Company Management"}
+							{activeTab === "reported" && "Reported Content"}
 						</h2>
 					</div>
 				</header>
@@ -816,6 +906,119 @@ const Dashboard = () => {
 							</div>
 						</div>
 					)}
+
+					{activeTab === "reported" && (
+						<div className="bg-white rounded-lg shadow">
+							<div className="p-6 border-b border-gray-200">
+								<h3 className="text-lg font-semibold">
+									Reported Experiences
+								</h3>
+							</div>
+
+							<div className="overflow-x-auto">
+								<table className="min-w-full divide-y divide-gray-200">
+									<thead className="bg-gray-50">
+										<tr>
+											<th
+												scope="col"
+												className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+											>
+												Company Name
+											</th>
+											<th
+												scope="col"
+												className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+											>
+												Role
+											</th>
+											<th
+												scope="col"
+												className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+											>
+												Author Name
+											</th>
+											<th
+												scope="col"
+												className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+											>
+												Report Reason
+											</th>
+											<th
+												scope="col"
+												className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+											>
+												Report Count
+											</th>
+											<th
+												scope="col"
+												className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+											>
+												Actions
+											</th>
+										</tr>
+									</thead>
+									<tbody className="bg-white divide-y divide-gray-200">
+										{reportedContent.map((report) => (
+											<tr key={report._id}>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm font-medium text-gray-900">
+														{report.companyName ||
+															"N/A"}
+													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-500">
+														{report.role || "N/A"}
+													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-500">
+														{report.authorName ||
+															"N/A"}
+													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<div className="text-sm text-gray-500">
+														{report.reason || "N/A"}
+													</div>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap">
+													<span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+														{report.reportCount ||
+															0}
+													</span>
+												</td>
+												<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+													<button
+														onClick={() =>
+															handleListExperience(
+																report._id
+															)
+														}
+														className="text-blue-600 hover:text-blue-900 mr-3"
+													>
+														List It
+													</button>
+													<button
+														onClick={() => {
+															setShowDeleteModal(true)
+															setDeleteExperienceId(
+																report._id
+															);
+														}
+														}
+														className="text-red-600 hover:text-red-900"
+													>
+														Delete
+													</button>
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</div>
+					)}
 				</main>
 			</div>
 
@@ -863,6 +1066,12 @@ const Dashboard = () => {
 					</div>
 				</div>
 			)}
+			<DeleteConfirmationModal
+				isOpen={showDeleteModal}
+				onClose={() => setShowDeleteModal(false)}
+				onConfirm={handleDeleteExperience}
+				itemName="interview experience"
+			/>
 		</div>
 	);
 };

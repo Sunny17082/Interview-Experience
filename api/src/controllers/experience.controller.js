@@ -573,6 +573,141 @@ const handleDeleteExperience = async (req, res) => {
 	}
 };
 
+const handleGetReportedExperiences = async (req, res) => {
+	connectDB();
+	const { token } = req.cookies;
+
+	try {
+		// Verify admin user
+		const user = await verifyUserFromToken(token);
+		if (!user) {
+			return res
+				.status(401)
+				.json({ success: false, message: "Unauthorized" });
+		}
+
+		if (user.role !== "admin") {
+			return res
+				.status(403)
+				.json({ success: false, message: "Admin access required" });
+		}
+
+		// Get all experiences that have been reported (report count > 0)
+		const reportedExperiences = await Experience.find({
+			report: { $gt: 0 },
+		})
+			.populate("user", "name email")
+			.select(
+				"companyName role user reporters report unlisted reportedAt"
+			)
+			.sort({ reportedAt: -1 });
+
+		// Format the data for frontend
+		const formattedReports = reportedExperiences.map((experience) => {
+			// Get the most recent report reason
+			const latestReport =
+				experience.reporters && experience.reporters.length > 0
+					? experience.reporters[experience.reporters.length - 1]
+					: null;
+
+			const reasonLabels = {
+				spam: "Spam",
+				inappropriate_content: "Inappropriate Content",
+				offensive_language: "Offensive Language",
+				misleading_information: "Misleading Information",
+				privacy_violation: "Privacy Violation",
+				duplicate_content: "Duplicate Content",
+				other: "Other",
+			};
+
+			return {
+				_id: experience._id,
+				companyName: experience.companyName,
+				role: experience.role,
+				authorName: experience.user ? experience.user.name : "Unknown",
+				authorEmail: experience.user
+					? experience.user.email
+					: "Unknown",
+				reason: latestReport
+					? reasonLabels[latestReport.reason] || latestReport.reason
+					: "Unknown",
+				reportCount: experience.report,
+				unlisted: experience.unlisted,
+				reportedAt: experience.reportedAt,
+			};
+		});
+
+		return res.status(200).json({
+			success: true,
+			data: formattedReports,
+		});
+	} catch (err) {
+		console.error("Error in handleGetReportedExperiences:", err.message);
+		return res
+			.status(500)
+			.json({ success: false, message: "Internal server error" });
+	}
+};
+
+const handleListExperience = async (req, res) => {
+	connectDB();
+	const { id } = req.params;
+	const { token } = req.cookies;
+
+	try {
+		// Verify admin user
+		const user = await verifyUserFromToken(token);
+		if (!user) {
+			return res
+				.status(401)
+				.json({ success: false, message: "Unauthorized" });
+		}
+
+		if (user.role !== "admin") {
+			return res
+				.status(403)
+				.json({ success: false, message: "Admin access required" });
+		}
+
+		const experienceDoc = await Experience.findById(id);
+		if (!experienceDoc) {
+			return res
+				.status(404)
+				.json({ success: false, message: "Experience not found" });
+		}
+
+		// Relist the experience
+		experienceDoc.unlisted = false;
+		experienceDoc.scheduledForDeletion = null;
+		experienceDoc.report = 0; // Reset report count
+		experienceDoc.reporters = []; // Clear reporters
+		experienceDoc.reportedAt = null;
+
+		await experienceDoc.save();
+
+		// Notify the author
+		const author = await User.findById(experienceDoc.user);
+		if (author && author.email) {
+			const subject = "Your reported post has been reviewed and relisted";
+			const content = `Good news! After review, your interview experience for ${experienceDoc.companyName} has been relisted by our moderation team. Your post is now visible to the community again.`;
+			const cta = "View Your Post";
+			const link = `${process.env.FRONTEND_URL}/experience/${experienceDoc._id}`;
+
+			sendMail(author.name, author.email, subject, content, cta, link);
+		}
+
+		return res.status(200).json({
+			success: true,
+			message: "Experience has been relisted successfully",
+		});
+	} catch (err) {
+		console.error("Error in handleListExperience:", err.message);
+		return res
+			.status(500)
+			.json({ success: false, message: "Internal server error" });
+	}
+};
+
 module.exports = {
 	handlePostExperience,
 	handleGetExperience,
@@ -583,4 +718,6 @@ module.exports = {
 	handleToggleHelpful,
 	handlePostComment,
 	handleReport,
+	handleGetReportedExperiences,
+	handleListExperience,
 };
