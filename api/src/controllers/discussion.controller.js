@@ -1,7 +1,7 @@
 const Discussion = require("../models/discussion.model");
 const { verifyUserFromToken } = require("../utils/authentication");
 const { sendMail } = require("../utils/mailingService");
-const { connectDB } = require("../db/connection");
+const connectDB = require("../db/connection");
 
 const handlePostDiscussion = async (req, res) => {
 	connectDB();

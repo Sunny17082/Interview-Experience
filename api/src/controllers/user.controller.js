@@ -13,7 +13,7 @@ const Jobs = require("../models/jobs.model");
 const Company = require("../models/company.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const crypto = require("crypto");
-const { connectDB } = require("../db/connection");
+const connectDB = require("../db/connection");
 
 const generateToken = () => {
 	return crypto.randomBytes(32).toString("hex");

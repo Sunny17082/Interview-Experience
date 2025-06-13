@@ -1,6 +1,6 @@
 const Jobs = require("../models/jobs.model");
 const { verifyUserFromToken } = require("../utils/authentication");
-const { connectDB } = require("../db/connection");
+const connectDB = require("../db/connection");
 
 
 const handlePostJobs = async (req, res) => {

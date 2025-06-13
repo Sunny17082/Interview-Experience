@@ -5,7 +5,7 @@ const Sentiment = require("sentiment");
 const sentiment = new Sentiment();
 const User = require("../models/user.model");
 const { sendMail } = require("../utils/mailingService");
-const { connectDB } = require("../db/connection");
+const connectDB = require("../db/connection");
 
 
 const getSentimentCategory = (score) => {

@@ -1,6 +1,6 @@
 const Resource = require("../models/resource.model");
 const { verifyUserFromToken } = require("../utils/authentication");
-const { connectDB } = require("../db/connection");
+const connectDB = require("../db/connection");
 
 const handlePostResource = async (req, res) => {
 	connectDB();

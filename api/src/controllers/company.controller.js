@@ -1,5 +1,5 @@
 const Company = require("../models/company.model");
-const { connectDB } = require("../db/connection");
+const connectDB = require("../db/connection");
 
 const handlePostCompany = async (req, res) => {
 	connectDB();
