@@ -1,6 +1,8 @@
 const Company = require("../models/company.model");
+const { connectDB } = require("../db/connection");
 
 const handlePostCompany = async (req, res) => {
+	connectDB();
 	try {
 		const { name, logo, links, linkedIn, roles, eligibility } = req.body;
 		const companyDoc = await Company.create({
@@ -27,6 +29,7 @@ const handlePostCompany = async (req, res) => {
 };
 
 const handleGetCompany = async (req, res) => {
+	connectDB();
 	try {
 		const companyDoc = await Company.find({});
 		if (!companyDoc) {
@@ -50,6 +53,7 @@ const handleGetCompany = async (req, res) => {
 };
 
 const handleGetCompanyByLimit = async (req, res) => {
+	connectDB();
 	const { limit } = req.query;
 	console.log(limit);
 	try {
@@ -75,6 +79,7 @@ const handleGetCompanyByLimit = async (req, res) => {
 };
 
 const handleGetCompanyById = async (req, res) => {
+	connectDB();
 	try {
 		const { id } = req.params;
 		const companyDoc = await Company.findById(id);
@@ -99,6 +104,7 @@ const handleGetCompanyById = async (req, res) => {
 };
 
 const handleUpdateCompany = async (req, res) => {
+	connectDB();
 	try {
 		const { id } = req.params;
 		const { name, logo, links, linkedIn, roles, eligibility } = req.body;
@@ -128,9 +134,10 @@ const handleUpdateCompany = async (req, res) => {
 			message: "Internal server error",
 		});
 	}
-}
+};
 
 const handleDeleteCompany = async (req, res) => {
+	connectDB();
 	try {
 		const { id } = req.params;
 		const companyDoc = await Company.findByIdAndDelete(id);
@@ -151,7 +158,7 @@ const handleDeleteCompany = async (req, res) => {
 			message: "Internal server error",
 		});
 	}
-}
+};
 
 module.exports = {
 	handlePostCompany,

@@ -1,8 +1,10 @@
 const Jobs = require("../models/jobs.model");
 const { verifyUserFromToken } = require("../utils/authentication");
+const { connectDB } = require("../db/connection");
 
 
 const handlePostJobs = async (req, res) => {
+	connectDB();
 	const { title, description, company, url, type, applicationDeadline } = req.body;
 	const { token } = req.cookies;
 	try {
@@ -37,6 +39,7 @@ const handlePostJobs = async (req, res) => {
 };
 
 const handleGetJobs = async (req, res) => {
+	connectDB();
 	try {
 		const jobsDoc = await Jobs.find({}).sort({ applicationDeadline: -1 });
 		if (!jobsDoc) {

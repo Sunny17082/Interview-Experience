@@ -5,6 +5,8 @@ const Sentiment = require("sentiment");
 const sentiment = new Sentiment();
 const User = require("../models/user.model");
 const { sendMail } = require("../utils/mailingService");
+const { connectDB } = require("../db/connection");
+
 
 const getSentimentCategory = (score) => {
 	if (score > 1) return "positive";
@@ -13,6 +15,7 @@ const getSentimentCategory = (score) => {
 };
 
 const handlePostExperience = async (req, res) => {
+	connectDB();
 	const {
 		name,
 		companyName,
@@ -82,6 +85,7 @@ const handlePostExperience = async (req, res) => {
 };
 
 const handleGetExperience = async (req, res) => {
+	connectDB();
 	try {
 		// Only get experiences that are not unlisted
 		const experienceDoc = await Experience.find({
@@ -105,6 +109,7 @@ const handleGetExperience = async (req, res) => {
 };
 
 const handleGetExperienceById = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	try {
 		const experienceDoc = await Experience.findById(id)
@@ -126,6 +131,7 @@ const handleGetExperienceById = async (req, res) => {
 };
 
 const handleToggleHelpful = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	const { token } = req.cookies;
 
@@ -181,6 +187,7 @@ const handleToggleHelpful = async (req, res) => {
 };
 
 const handlePostComment = async (req, res) => {
+	connectDB();
 	const { comment } = req.body;
 	const { id } = req.params;
 	const { token } = req.cookies;
@@ -246,6 +253,7 @@ const handlePostComment = async (req, res) => {
 };
 
 const handleReport = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	const { token } = req.cookies;
 	const { reason, details } = req.body;
@@ -399,6 +407,7 @@ const handleReport = async (req, res) => {
 };
 
 const handleUpdateExperience = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	const { token } = req.cookies;
 	const updateData = req.body;
@@ -512,6 +521,7 @@ const handleUpdateExperience = async (req, res) => {
 };
 
 const handleGetExperienceByLimit = async (req, res) => {
+	connectDB();
 	const { limit } = req.query;
 	try {
 		// Only get experiences that are not unlisted
@@ -534,6 +544,7 @@ const handleGetExperienceByLimit = async (req, res) => {
 };
 
 const handleDeleteExperience = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	const { token } = req.cookies;
 

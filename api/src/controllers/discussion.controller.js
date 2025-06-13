@@ -1,8 +1,10 @@
 const Discussion = require("../models/discussion.model");
 const { verifyUserFromToken } = require("../utils/authentication");
 const { sendMail } = require("../utils/mailingService");
+const { connectDB } = require("../db/connection");
 
 const handlePostDiscussion = async (req, res) => {
+	connectDB();
 	try {
 		const { title, type, content } = req.body;
 		const { token } = req.cookies;
@@ -36,6 +38,7 @@ const handlePostDiscussion = async (req, res) => {
 };
 
 const handleGetDiscussion = async (req, res) => {
+	connectDB();
 	try {
 		const discussionDoc = await Discussion.find({}).populate(
 			"user",
@@ -53,6 +56,7 @@ const handleGetDiscussion = async (req, res) => {
 };
 
 const handleGetDiscussionById = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	try {
 		const discussionDoc = await Discussion.findById(id).populate(
@@ -76,6 +80,7 @@ const handleGetDiscussionById = async (req, res) => {
 };
 
 const handleToggleLike = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	const { token } = req.cookies;
 	// Verify user from token
@@ -115,6 +120,7 @@ const handleToggleLike = async (req, res) => {
 };
 
 const handlePostComment = async (req, res) => {
+	connectDB();
 	const { comment } = req.body;
 	const { id } = req.params;
 	const { token } = req.cookies;

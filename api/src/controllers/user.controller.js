@@ -13,6 +13,7 @@ const Jobs = require("../models/jobs.model");
 const Company = require("../models/company.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const crypto = require("crypto");
+const { connectDB } = require("../db/connection");
 
 const generateToken = () => {
 	return crypto.randomBytes(32).toString("hex");
@@ -82,6 +83,8 @@ const handleRegister = async (req, res) => {
 		});
 	}
 
+	connectDB();
+
 	const { name, email, password } = req.body;
 	try {
 		const userDoc = await User.findOne({ email });
@@ -135,6 +138,7 @@ const handleRegister = async (req, res) => {
 };
 
 const handleLogin = async (req, res) => {
+	connectDB();
 	const { email, password } = req.body;
 	try {
 		if (!email || !password) {
@@ -214,6 +218,7 @@ passport.use(
 		},
 		async function (accessToken, refreshToken, profile, done) {
 			try {
+				connectDB();
 				// First check if user exists with this Google ID
 				let user = await User.findOne({ googleId: profile.id });
 
@@ -256,6 +261,7 @@ const handleGoogleLogin = passport.authenticate("google", {
 });
 
 const handleGoogleCallback = (req, res, next) => {
+	
 	passport.authenticate("google", { session: false }, (err, user) => {
 		if (err || !user) {
 			return res.status(400).json({ error: err });
@@ -282,6 +288,7 @@ const handleGoogleCallback = (req, res, next) => {
 };
 
 const handleGetUser = (req, res) => {
+	connectDB();
 	const { token } = req.cookies;
 	try {
 		if (!token || token === "") {
@@ -300,6 +307,7 @@ const handleGetUser = (req, res) => {
 };
 
 const handleGetUserById = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 
 	try {
@@ -343,6 +351,7 @@ const handleGetUserById = async (req, res) => {
 };
 
 const handleGetAllUser = async (req, res) => {
+	connectDB();
 	try {
 		const userDoc = await User.find({}).select("-password -__v");
 		if (!userDoc) {
@@ -365,6 +374,7 @@ const handleGetAllUser = async (req, res) => {
 };
 
 const handleRoleChange = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	const { role } = req.body;
 	try {
@@ -412,6 +422,7 @@ const handleRoleChange = async (req, res) => {
 };
 
 const handleBulkEmail = async (req, res) => {
+	connectDB();
 	try {
 		const { userIds, subject, content, cta, link } = req.body;
 
@@ -471,6 +482,7 @@ const handleBulkEmail = async (req, res) => {
 };
 
 const handleGetDashboardData = async (req, res) => {
+	connectDB();
 	try {
 		const userCount = await User.countDocuments({});
 		const discussionCount = await Discussion.countDocuments({});
@@ -501,6 +513,7 @@ const handleGetDashboardData = async (req, res) => {
 };
 
 const handleUpdateProfile = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	try {
 		// Check if user exists
@@ -572,6 +585,7 @@ const handleLogout = (req, res) => {
 
 // Handle sending verification email
 const handleSendVerificationEmail = async (req, res) => {
+	connectDB();
 	try {
 		const { email } = req.body;
 		if (!email) {
@@ -635,6 +649,7 @@ const handleSendVerificationEmail = async (req, res) => {
 
 // Handle verifying email token
 const handleVerifyEmail = async (req, res) => {
+	connectDB();
 	try {
 		const { token } = req.params;
 
@@ -689,6 +704,7 @@ const handleVerifyEmail = async (req, res) => {
 
 // Request password reset
 const handleForgotPassword = async (req, res) => {
+	connectDB();
 	try {
 		const { email } = req.body;
 
@@ -746,6 +762,7 @@ const handleForgotPassword = async (req, res) => {
 
 // Reset password with token
 const handleResetPassword = async (req, res) => {
+	connectDB();
 	try {
 		const { token } = req.params;
 		const { password } = req.body;
@@ -825,6 +842,7 @@ const handleResetPassword = async (req, res) => {
 
 // Resend verification email
 const handleResendVerificationEmail = async (req, res) => {
+	connectDB();
 	try {
 		const { email } = req.body;
 

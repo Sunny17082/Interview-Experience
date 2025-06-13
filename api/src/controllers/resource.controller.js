@@ -1,7 +1,9 @@
 const Resource = require("../models/resource.model");
 const { verifyUserFromToken } = require("../utils/authentication");
+const { connectDB } = require("../db/connection");
 
 const handlePostResource = async (req, res) => {
+	connectDB();
 	const { title, banner, description, url, type, tags } = req.body;
 	const { token } = req.cookies;
 	try {
@@ -36,6 +38,7 @@ const handlePostResource = async (req, res) => {
 };
 
 const handleGetResource = async (req, res) => {
+	connectDB();
 	try {
 		const resourceDoc = await Resource.find({}).sort({ "likes": -1 });
 		if (!resourceDoc) {
@@ -59,6 +62,7 @@ const handleGetResource = async (req, res) => {
 };
 
 const handleToggleLike = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	const { token } = req.cookies;
 	try {
@@ -104,6 +108,7 @@ const handleToggleLike = async (req, res) => {
 };
 
 const handleToggleDislike = async (req, res) => {
+	connectDB();
 	const { id } = req.params;
 	const { token } = req.cookies;
 	try {
