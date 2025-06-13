@@ -56,6 +56,7 @@ const resourceSchema = new mongoose.Schema({
 			"Aptitude",
 			"MR",
 			"HR",
+			"others"
 		],
 	},
 	likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }],

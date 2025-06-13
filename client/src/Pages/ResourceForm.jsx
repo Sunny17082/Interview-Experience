@@ -46,6 +46,7 @@ const ResourceForm = () => {
 		"Aptitude",
 		"MR",
 		"HR",
+		"others",
 	];
 
 	const handleChange = (e) => {
