@@ -49,17 +49,24 @@ const DiscussionPage = () => {
 
 	const handleSubmitComment = async (e) => {
 		e.preventDefault();
+		if (!user) {
+			toast.error("Please log in to add a comment.");
+			return;
+		}
 		if (!comment.trim()) return;
 		try {
-			const response = await axios.post(`/discussion/${id}/comment`,{ comment }, {
+			const response = await axios.post(
+				`/discussion/${id}/comment`,
+				{ comment },
+				{
 					withCredentials: true,
 				}
 			);
-			if (response.status === 200) {
+			if (response.status === 201) {
 				toast.success("Comment added successfully.");
+				setComment("");
+				getDiscussion();
 			}
-			setComment("");
-			getDiscussion();
 		} catch (err) {
 			toast.error("Failed to add comment.");
 		}
@@ -217,7 +224,7 @@ const DiscussionPage = () => {
 		);
 
 		return processedContent;
-	}; 
+	};
 
 	if (loading) {
 		return (

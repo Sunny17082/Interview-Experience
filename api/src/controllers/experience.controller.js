@@ -225,7 +225,7 @@ const handlePostComment = async (req, res) => {
 		if (
 			experienceAuthor &&
 			experienceAuthor.email &&
-			experienceAuthor._id.toString() !== user._id.toString()
+			experienceAuthor._id.toString() !== user.id.toString()
 		) {
 			sendMail(
 				experienceAuthor.name,

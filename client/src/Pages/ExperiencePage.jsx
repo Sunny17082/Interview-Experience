@@ -82,8 +82,6 @@ const ExperiencePage = () => {
 				toast.success("Comment added successfully.");
 				setComment("");
 				getExperienceById();
-			} else {
-				toast.error("Failed to add comment.");
 			}
 		} catch (err) {
 			console.error("Error adding comment:", err);
