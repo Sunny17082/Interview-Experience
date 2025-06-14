@@ -2,8 +2,6 @@ import { useContext, useEffect, useState } from "react";
 import {
 	Menu,
 	X,
-	ChevronDown,
-	ChevronUp,
 	Search,
 	Users,
 	Home,
@@ -14,7 +12,6 @@ import {
 	Send,
 	Edit,
 	Trash,
-	Pen,
 	Check,
 	LogOut,
 	X as XIcon,
@@ -26,7 +23,7 @@ import DeleteConfirmationModal from "../Components/DeleteConfirmationModal";
 import { toast } from "react-toastify";
 
 const Dashboard = () => {
-	const [sidebarOpen, setSidebarOpen] = useState(true);
+	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [activeTab, setActiveTab] = useState("overview");
 	const [selectedUsers, setSelectedUsers] = useState([]);
 	const [emailModalOpen, setEmailModalOpen] = useState(false);
