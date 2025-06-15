@@ -2,6 +2,7 @@ const Discussion = require("../models/discussion.model");
 const { verifyUserFromToken } = require("../utils/authentication");
 const { sendMail } = require("../utils/mailingService");
 const connectDB = require("../db/connection");
+const User = require("../models/user.model");
 
 const handlePostDiscussion = async (req, res) => {
 	connectDB();
@@ -59,10 +60,9 @@ const handleGetDiscussionById = async (req, res) => {
 	connectDB();
 	const { id } = req.params;
 	try {
-		const discussionDoc = await Discussion.findById(id).populate(
-			"user",
-			"name email"
-		).populate("comments.user", "name email");
+		const discussionDoc = await Discussion.findById(id)
+			.populate("user", "name email")
+			.populate("comments.user", "name email");
 		if (!discussionDoc) {
 			return res
 				.status(404)
@@ -127,6 +127,7 @@ const handlePostComment = async (req, res) => {
 	// Verify user from token
 	try {
 		const user = await verifyUserFromToken(token);
+		console.log("User from token:", user);
 		if (!user) {
 			return res
 				.status(401)
@@ -143,23 +144,33 @@ const handlePostComment = async (req, res) => {
 				.status(400)
 				.json({ success: false, message: "Missing required fields" });
 		}
-		if(!discussionDoc.comments) {
+		if (!discussionDoc.comments) {
 			discussionDoc.comments = [];
 		}
 		discussionDoc.comments.push({
 			content: comment,
 			user: user.id,
+			username: user.name,
 			createdAt: new Date(),
 		});
 		await discussionDoc.save();
-		sendMail(
-			user.name,
-			user.email,
-			"Somone commented on your discussion",
-			`Your discussion for ${discussionDoc.title} has a new comment`,
-			"View Experience",
-			`${process.env.FRONTEND_URL}/discussion/${discussionDoc._id}`
-		);
+
+		const discussionAuthor = await User.findById(discussionDoc.user);
+
+		if (
+			discussionAuthor &&
+			discussionAuthor.email &&
+			discussionAuthor._id.toString() !== user.id.toString()
+		) {
+			sendMail(
+				discussionAuthor.name,
+				discussionAuthor.email,
+				"Somone commented on your discussion",
+				`Your discussion for ${discussionDoc.title} has a new comment`,
+				"View Discussion",
+				`${process.env.FRONTEND_URL}/discussion/${discussionDoc._id}`
+			);
+		}
 		return res.status(201).json({
 			success: true,
 			message: "Comment added successfully",

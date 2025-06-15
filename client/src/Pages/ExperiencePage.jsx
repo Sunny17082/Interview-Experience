@@ -370,7 +370,7 @@ const ExperiencePage = () => {
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
-					{user && user.name !== experience?.user?.name && (
+					{user && user.email !== experience?.user?.email && (
 						<button
 							onClick={handleHelpfulClick}
 							className={`px-3 py-1 rounded-md flex items-center gap-2 transition ${
@@ -397,7 +397,7 @@ const ExperiencePage = () => {
 							{isHelpful ? "Helpful!" : "Helpful"}
 						</button>
 					)}
-					{user && user.name !== experience?.user?.name && (
+					{user && user.email !== experience?.user?.email && (
 						<button
 							onClick={() => setShowReportModal(true)} // Change this line
 							className="px-3 py-1 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
@@ -419,7 +419,7 @@ const ExperiencePage = () => {
 							Report
 						</button>
 					)}
-					{user && user.name === experience?.user?.name && (
+					{user && user.email === experience?.user?.email && (
 						<Link
 							to={`/experience/edit/${experience._id}`}
 							className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
@@ -427,7 +427,7 @@ const ExperiencePage = () => {
 							<Edit size={16} />
 						</Link>
 					)}
-					{user && user.name === experience?.user?.name && (
+					{user && user.email === experience?.user?.email && (
 						<button
 							onClick={() => setShowDeleteModal(true)}
 							className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"

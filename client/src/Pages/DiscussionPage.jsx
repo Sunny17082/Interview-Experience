@@ -120,14 +120,14 @@ const DiscussionPage = () => {
 
 	// Avatar component for user logos - updated to black with first letter only
 	const UserAvatar = ({ name }) => {
-		const firstLetter = name.charAt(0).toUpperCase();
+		const firstLetter = name?.charAt(0).toUpperCase();
 
 		return (
 			<div className="bg-black w-8 h-8 rounded-full flex items-center justify-center text-white font-medium">
 				{firstLetter}
 			</div>
 		);
-	};
+	}
 
 	// Process markdown content to properly render all elements
 	const processMarkdown = (content) => {

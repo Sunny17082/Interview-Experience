@@ -23,6 +23,7 @@ const discussionSchema = new mongoose.Schema(
 		comments: [
 			{
 				user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+				username: { type: String, required: true },
 				content: String,
 				createdAt: { type: Date, default: Date.now },
 				likes: [

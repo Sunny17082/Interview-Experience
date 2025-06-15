@@ -404,7 +404,7 @@ const handleRoleChange = async (req, res) => {
 			"Role updated",
 			`Your role has been updated to ${role}`,
 			"view profile",
-			`http://localhost:5173/profile/${userDoc._id}`
+			`${process.env.CLIENT_URL}/profile/${userDoc._id}`
 		);
 		return res.status(200).json({
 			success: true,
@@ -464,7 +464,7 @@ const handleBulkEmail = async (req, res) => {
 			subject,
 			content,
 			cta || "view",
-			link || "http://localhost:5173"
+			link || `${process.env.CLIENT_URL}`
 		);
 
 		return res.status(200).json({
