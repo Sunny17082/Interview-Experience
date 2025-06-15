@@ -36,6 +36,7 @@ const Dashboard = () => {
 	const [loggedInUser, setLoggedInUser] = useState(null);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [deleteExperienceId, setDeleteExperienceId] = useState(null);
+	const [deleteCompanyId, setDeleteCompanyId] = useState(null);
 
 	const [companies, setCompanies] = useState([]);
 	const [users, setUsers] = useState([]);
@@ -129,6 +130,19 @@ const Dashboard = () => {
 		}
 	};
 
+	const handleDeleteCompany = async () => {
+		const id = deleteCompanyId;
+		const response = await axios.delete(`/company/${id}`, {
+			withCredentials: true,
+		});
+		if (response.status === 200) {
+			toast.success("Company deleted successfully.");
+		}
+		setShowDeleteModal(false);
+		setDeleteCompanyId(null);
+		getCompany();
+	};
+
 	const handleDeleteExperience = async () => {
 		const id = deleteExperienceId;
 		const response = await axios.delete(`/experience/${id}`, {
@@ -201,7 +215,7 @@ const Dashboard = () => {
 		} catch (err) {
 			console.error("Error updating role:", err);
 			// Show error message to user
-			alert("Failed to update role. Please try again.");
+			toast.error("Failed to update role. Please try again.");
 		}
 	};
 
@@ -215,7 +229,7 @@ const Dashboard = () => {
 			);
 
 			if (response.status === 200) {
-				alert("Experience has been relisted successfully!");
+				toast.success("Experience listed successfully.");
 				// Refresh the reported content
 				getReportedContent();
 			}
@@ -686,9 +700,12 @@ const Dashboard = () => {
 													/>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm font-medium text-gray-900">
+													<Link
+														to={`/profile/${user._id}`}
+														className="text-sm font-medium text-gray-900"
+													>
 														{user.name}
-													</div>
+													</Link>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-500">
@@ -795,13 +812,13 @@ const Dashboard = () => {
 																		/>
 																	</button>
 																)}
-																<button className="text-gray-600 hover:text-red-600 focus:outline-none">
+																{/* <button className="text-gray-600 hover:text-red-600 focus:outline-none">
 																	<Trash
 																		size={
 																			16
 																		}
 																	/>
-																</button>
+																</button> */}
 															</div>
 														)}
 												</td>
@@ -892,7 +909,17 @@ const Dashboard = () => {
 															<Edit size={16} />
 														</button>
 													</Link>
-													<button className="text-gray-600 hover:text-red-600">
+													<button
+														onClick={() => {
+															setShowDeleteModal(
+																true
+															);
+															setDeleteCompanyId(
+																company._id
+															);
+														}}
+														className="text-gray-600 hover:text-red-600"
+													>
 														<Trash size={16} />
 													</button>
 												</td>
@@ -958,10 +985,13 @@ const Dashboard = () => {
 										{reportedContent.map((report) => (
 											<tr key={report._id}>
 												<td className="px-6 py-4 whitespace-nowrap">
-													<div className="text-sm font-medium text-gray-900">
+													<Link
+														to={`/experience/${report._id}`}
+														className="text-sm font-medium text-gray-900"
+													>
 														{report.companyName ||
 															"N/A"}
-													</div>
+													</Link>
 												</td>
 												<td className="px-6 py-4 whitespace-nowrap">
 													<div className="text-sm text-gray-500">
@@ -998,12 +1028,13 @@ const Dashboard = () => {
 													</button>
 													<button
 														onClick={() => {
-															setShowDeleteModal(true)
+															setShowDeleteModal(
+																true
+															);
 															setDeleteExperienceId(
 																report._id
 															);
-														}
-														}
+														}}
 														className="text-red-600 hover:text-red-900"
 													>
 														Delete
@@ -1066,11 +1097,14 @@ const Dashboard = () => {
 			<DeleteConfirmationModal
 				isOpen={showDeleteModal}
 				onClose={() => setShowDeleteModal(false)}
-				onConfirm={handleDeleteExperience}
-				itemName="interview experience"
+				onConfirm={
+					deleteCompanyId
+						? handleDeleteCompany
+						: handleDeleteExperience
+				}
+				itemName={deleteCompanyId ? "company" : "interview experience"}
 			/>
 		</div>
 	);
 };
-
 export default Dashboard;

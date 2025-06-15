@@ -24,7 +24,7 @@ const CompaniesPage = () => {
 		} else {
 			toast.error(data.message);
 		}
-	}
+	};
 
 	// Filter companies based on search term and filter selection
 	const filteredCompanies = companies.filter((company) => {
@@ -35,12 +35,61 @@ const CompaniesPage = () => {
 		if (filter === "all") return matchesSearch;
 
 		// Filter by role type (tech/non-tech)
-		const nonTechRoles = [""];
+		const nonTechRoles = [
+			"finance",
+			"hr",
+			"marketing",
+			"operations",
+			"legal",
+			"sales",
+			"consulting",
+			"administration",
+			"support",
+			"management",
+			"business development",
+			"customer service",
+			"project management",
+			"data entry",
+			"content writing",
+			"graphic design",
+			"research",
+			"training",
+			"quality assurance",
+			"procurement",
+			"supply chain management",
+			"public relations",
+			"event management",
+			"recruitment",
+			"training and development",
+			"corporate communications",
+			"strategic planning",
+			"risk management",
+			"compliance",
+			"policy analysis",
+			"government relations",
+			"community outreach",
+			"fundraising",
+			"non-profit management",
+			"social media management",
+			"digital marketing",
+			"content creation",
+			"brand management",
+			"advertising",
+			"public affairs",
+			"corporate social responsibility",
+			"business analysis",
+			"market research",
+			"product management",
+			"sales support",
+			"customer success",
+			"technical writing",
+			"user experience design",
+		];
 		const hasFilteredRole = company.roles.some((role) => {
 			const isRolenonTech = nonTechRoles.some((nonTech) =>
 				role.role.includes(nonTech)
 			);
-			return filter === "tech" ? isRolenonTech : !isRolenonTech;
+			return filter === "tech" ? !isRolenonTech : isRolenonTech;
 		});
 
 		return matchesSearch && hasFilteredRole;

@@ -125,7 +125,7 @@ const ExperiencePage = () => {
 				{[1, 2, 3, 4, 5].map((star) => (
 					<div
 						key={star}
-						className={`h-2 w-4 ${
+						className={`h-2 w-3 sm:w-4 ${
 							star <= level ? "bg-gray-800" : "bg-gray-300"
 						}`}
 					/>
@@ -238,15 +238,15 @@ const ExperiencePage = () => {
 		let processedContent = content
 			.replace(
 				/^# (.*$)/gm,
-				'<h1 class="text-3xl font-bold mt-6 mb-4">$1</h1>'
+				'<h1 class="text-2xl sm:text-3xl font-bold mt-6 mb-4">$1</h1>'
 			)
 			.replace(
 				/^## (.*$)/gm,
-				'<h2 class="text-2xl font-bold mt-5 mb-3">$1</h2>'
+				'<h2 class="text-xl sm:text-2xl font-bold mt-5 mb-3">$1</h2>'
 			)
 			.replace(
 				/^### (.*$)/gm,
-				'<h3 class="text-xl font-bold mt-4 mb-2">$1</h3>'
+				'<h3 class="text-lg sm:text-xl font-bold mt-4 mb-2">$1</h3>'
 			);
 
 		// Process formatting (bold, italic)
@@ -276,13 +276,13 @@ const ExperiencePage = () => {
 		// Process code blocks
 		processedContent = processedContent.replace(
 			/```(jsx|js|javascript)?\n([\s\S]*?)```/g,
-			'<pre class="bg-gray-800 text-gray-200 p-4 rounded-md overflow-x-auto my-4"><code>$2</code></pre>'
+			'<pre class="bg-gray-800 text-gray-200 p-3 sm:p-4 rounded-md overflow-x-auto my-4 text-sm"><code>$2</code></pre>'
 		);
 
 		// Process inline code
 		processedContent = processedContent.replace(
 			/`([^`]+)`/g,
-			'<code class="bg-gray-100 text-gray-800 px-1 py-0.5 rounded">$1</code>'
+			'<code class="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm">$1</code>'
 		);
 
 		return processedContent;
@@ -359,28 +359,28 @@ const ExperiencePage = () => {
 	};
 
 	return (
-		<div className="max-w-5xl mx-auto px-4 py-8 bg-white min-h-screen">
-			<div className="mb-8 flex justify-between items-start">
-				<div>
-					<h1 className="text-3xl font-bold text-gray-900">
+		<div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 bg-white min-h-screen">
+			<div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+				<div className="flex-1">
+					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
 						{experience?.name}
 					</h1>
-					<p className="text-gray-500 mt-1">
+					<p className="text-gray-500 mt-1 text-sm sm:text-base">
 						Shared on {formatDate(experience?.createdAt)}
 					</p>
 				</div>
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center gap-2">
 					{user && user.email !== experience?.user?.email && (
 						<button
 							onClick={handleHelpfulClick}
-							className={`px-3 py-1 rounded-md flex items-center gap-2 transition ${
+							className={`px-3 py-1.5 sm:py-1 rounded-md flex items-center gap-2 transition text-sm ${
 								isHelpful
 									? "bg-green-100 text-green-800 border border-green-500"
 									: "bg-gray-100 text-gray-800 border border-gray-300 hover:bg-gray-200"
 							}`}
 						>
 							<svg
-								className="w-4 h-4"
+								className="w-4 h-4 flex-shrink-0"
 								fill={isHelpful ? "currentColor" : "none"}
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -393,17 +393,19 @@ const ExperiencePage = () => {
 									d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
 								></path>
 							</svg>
-							{helpfulCount + " "}
-							{isHelpful ? "Helpful!" : "Helpful"}
+							<span className="whitespace-nowrap">
+								{helpfulCount + " "}
+								{isHelpful ? "Helpful!" : "Helpful"}
+							</span>
 						</button>
 					)}
 					{user && user.email !== experience?.user?.email && (
 						<button
-							onClick={() => setShowReportModal(true)} // Change this line
-							className="px-3 py-1 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
+							onClick={() => setShowReportModal(true)}
+							className="px-3 py-1.5 sm:py-1 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2 text-sm"
 						>
 							<svg
-								className="w-4 h-4"
+								className="w-4 h-4 flex-shrink-0"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -416,13 +418,13 @@ const ExperiencePage = () => {
 									d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
 								></path>
 							</svg>
-							Report
+							<span className="hidden sm:inline">Report</span>
 						</button>
 					)}
 					{user && user.email === experience?.user?.email && (
 						<Link
 							to={`/experience/edit/${experience._id}`}
-							className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
+							className="px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
 						>
 							<Edit size={16} />
 						</Link>
@@ -430,7 +432,7 @@ const ExperiencePage = () => {
 					{user && user.email === experience?.user?.email && (
 						<button
 							onClick={() => setShowDeleteModal(true)}
-							className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
+							className="px-3 py-1.5 sm:py-2 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-200 flex items-center gap-2"
 						>
 							<Trash size={16} />
 						</button>
@@ -439,23 +441,23 @@ const ExperiencePage = () => {
 			</div>
 
 			{/* Company and Role Info */}
-			<div className="bg-gray-50 p-6 rounded-lg shadow-sm mb-8">
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div className="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm mb-6 sm:mb-8">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 					<div>
 						<p className="text-gray-500 text-sm">Company</p>
-						<p className="text-xl font-bold text-gray-900">
+						<p className="text-lg sm:text-xl font-bold text-gray-900 break-words">
 							{experience?.companyName}
 						</p>
 					</div>
 					<div>
 						<p className="text-gray-500 text-sm">Role</p>
-						<p className="text-xl font-bold text-gray-900">
+						<p className="text-lg sm:text-xl font-bold text-gray-900 break-words">
 							{experience?.role}
 						</p>
 					</div>
 					<div>
 						<p className="text-gray-500 text-sm">Package Offered</p>
-						<p className="text-xl font-bold text-gray-900">
+						<p className="text-lg sm:text-xl font-bold text-gray-900">
 							{experience?.packageOffered} LPA
 						</p>
 					</div>
@@ -464,7 +466,7 @@ const ExperiencePage = () => {
 							Interview Status
 						</p>
 						<span
-							className={`font-semibold text-sm capitalize px-2 py-1 rounded-full ${getStatusColor(
+							className={`font-semibold text-sm capitalize px-2 py-1 rounded-full inline-block mt-1 ${getStatusColor(
 								experience?.interviewStatus
 							)}`}
 						>
@@ -475,21 +477,21 @@ const ExperiencePage = () => {
 			</div>
 
 			{/* AI Summary Section */}
-			<div className="mb-8 bg-gray-50 p-6 rounded-lg shadow-sm">
-				<div className="flex justify-between items-center mb-4">
-					<h2 className="text-2xl font-bold text-gray-900">
+			<div className="mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm">
+				<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
+					<h2 className="text-xl sm:text-2xl font-bold text-gray-900">
 						AI-Generated Summary
 					</h2>
 					{!summary && (
 						<button
 							onClick={generateSummary}
 							disabled={isLoadingSummary}
-							className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-900 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+							className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-900 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base whitespace-nowrap"
 						>
 							{isLoadingSummary ? (
 								<>
 									<svg
-										className="animate-spin h-4 w-4 text-white"
+										className="animate-spin h-4 w-4 text-white flex-shrink-0"
 										xmlns="http://www.w3.org/2000/svg"
 										fill="none"
 										viewBox="0 0 24 24"
@@ -513,7 +515,7 @@ const ExperiencePage = () => {
 							) : (
 								<>
 									<svg
-										className="w-4 h-4"
+										className="w-4 h-4 flex-shrink-0"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -533,9 +535,11 @@ const ExperiencePage = () => {
 					)}
 				</div>
 				{summary ? (
-					<ReactMarkdown>{summary}</ReactMarkdown>
+					<div className="prose prose-sm sm:prose max-w-none">
+						<ReactMarkdown>{summary}</ReactMarkdown>
+					</div>
 				) : (
-					<div className="text-gray-500 italic">
+					<div className="text-gray-500 italic text-sm sm:text-base">
 						{isLoadingSummary
 							? "Generating summary..."
 							: "Click the button to generate an AI summary of this interview experience."}
@@ -544,10 +548,10 @@ const ExperiencePage = () => {
 			</div>
 
 			{/* Interview Rounds */}
-			<h2 className="text-2xl font-bold text-gray-900 mb-4">
+			<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
 				Interview Rounds
 			</h2>
-			<div className="space-y-6">
+			<div className="space-y-4 sm:space-y-6">
 				{experience?.rounds.map((round, roundIndex) => {
 					const codingCount = countCodingQuestions(round.questions);
 					const isExpanded = expandedRounds[roundIndex];
@@ -557,16 +561,16 @@ const ExperiencePage = () => {
 							className="border border-gray-200 rounded-lg overflow-hidden"
 						>
 							<div
-								className="bg-gray-100 px-6 py-4 border-b border-gray-200 flex justify-between items-center cursor-pointer"
+								className="bg-gray-100 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex justify-between items-center cursor-pointer"
 								onClick={() => toggleRoundExpanded(roundIndex)}
 							>
-								<h3 className="text-lg font-semibold text-gray-800">
+								<h3 className="text-base sm:text-lg font-semibold text-gray-800 flex-1 pr-2">
 									Round {round.number}: {round.name}
 								</h3>
-								<div className="flex items-center gap-3">
-									<span className="bg-gray-800 text-white text-xs font-medium px-2.5 py-0.5 rounded flex items-center">
+								<div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+									<span className="bg-gray-800 text-white text-xs font-medium px-2 sm:px-2.5 py-0.5 rounded flex items-center">
 										<svg
-											className="w-3 h-3 mr-1"
+											className="w-3 h-3 mr-1 flex-shrink-0"
 											fill="none"
 											stroke="currentColor"
 											viewBox="0 0 24 24"
@@ -579,10 +583,15 @@ const ExperiencePage = () => {
 												d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
 											></path>
 										</svg>
-										{codingCount} Coding Questions
+										<span className="hidden sm:inline">
+											{codingCount} Coding Questions
+										</span>
+										<span className="sm:hidden">
+											{codingCount}
+										</span>
 									</span>
 									<svg
-										className={`w-5 h-5 transform transition-transform ${
+										className={`w-5 h-5 transform transition-transform flex-shrink-0 ${
 											isExpanded ? "rotate-180" : ""
 										}`}
 										fill="none"
@@ -600,8 +609,8 @@ const ExperiencePage = () => {
 								</div>
 							</div>
 							{isExpanded && (
-								<div className="p-6">
-									<div className="space-y-6">
+								<div className="p-4 sm:p-6">
+									<div className="space-y-4 sm:space-y-6">
 										{round.questions.map(
 											(question, questionIndex) => {
 												const questionId = `${roundIndex}-${questionIndex}`;
@@ -615,16 +624,16 @@ const ExperiencePage = () => {
 														key={questionIndex}
 														className="bg-gray-50 rounded-md overflow-hidden"
 													>
-														<div className="p-4">
-															<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
-																<div className="mb-2 sm:mb-0">
+														<div className="p-3 sm:p-4">
+															<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
+																<div className="flex flex-wrap gap-2">
 																	<span className="bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">
 																		{
 																			question.topic
 																		}
 																	</span>
 																	{question.isCodingQuestion && (
-																		<span className="bg-gray-800 text-white text-xs font-medium ml-2 px-2.5 py-0.5 rounded">
+																		<span className="bg-gray-800 text-white text-xs font-medium px-2.5 py-0.5 rounded">
 																			Coding
 																		</span>
 																	)}
@@ -642,7 +651,7 @@ const ExperiencePage = () => {
 																	</div>
 																)}
 															</div>
-															<pre className="text-gray-700 whitespace-pre-wrap break-words">
+															<pre className="text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base">
 																{
 																	question.description
 																}
@@ -659,12 +668,12 @@ const ExperiencePage = () => {
 																	disabled={
 																		isLoading
 																	}
-																	className="mt-4 px-3 py-1.5 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-300 flex items-center gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+																	className="mt-3 sm:mt-4 px-3 py-1.5 bg-gray-100 text-gray-800 rounded-md border border-gray-300 hover:bg-gray-300 flex items-center gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 																>
 																	{isLoading ? (
 																		<>
 																			<svg
-																				className="animate-spin h-4 w-4 text-gray-600"
+																				className="animate-spin h-4 w-4 text-gray-600 flex-shrink-0"
 																				xmlns="http://www.w3.org/2000/svg"
 																				fill="none"
 																				viewBox="0 0 24 24"
@@ -691,7 +700,7 @@ const ExperiencePage = () => {
 																	) : (
 																		<>
 																			<svg
-																				className="w-4 h-4"
+																				className="w-4 h-4 flex-shrink-0"
 																				fill="none"
 																				stroke="currentColor"
 																				viewBox="0 0 24 24"
@@ -717,10 +726,10 @@ const ExperiencePage = () => {
 
 														{/* AI-generated answer section */}
 														{hasAnswer && (
-															<div className="p-4 bg-gray-300 border-t border-gray-200">
+															<div className="p-3 sm:p-4 bg-gray-300 border-t border-gray-200">
 																<div className="flex items-center mb-2">
 																	<svg
-																		className="w-5 h-5 text-gray-600 mr-2"
+																		className="w-5 h-5 text-gray-600 mr-2 flex-shrink-0"
 																		fill="none"
 																		stroke="currentColor"
 																		viewBox="0 0 24 24"
@@ -733,29 +742,21 @@ const ExperiencePage = () => {
 																			d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
 																		></path>
 																	</svg>
-																	<h4 className="font-medium text-gray-800">
+																	<h4 className="font-medium text-gray-800 text-sm sm:text-base">
 																		AI
 																		Answer &
 																		Explanation
 																	</h4>
 																</div>
-																{/* <div
-																	className="prose prose-sm prose-gray max-w-none mb-3"
-																	dangerouslySetInnerHTML={{
-																		__html: processMarkdown(
+																<div className="prose prose-sm sm:prose max-w-none">
+																	<ReactMarkdown>
+																		{
 																			questionAnswers[
 																				questionId
 																			]
-																		),
-																	}}
-																/> */}
-																<ReactMarkdown>
-																	{
-																		questionAnswers[
-																			questionId
-																		]
-																	}
-																</ReactMarkdown>
+																		}
+																	</ReactMarkdown>
+																</div>
 															</div>
 														)}
 													</div>
@@ -783,22 +784,21 @@ const ExperiencePage = () => {
 			)}
 
 			{/* Overall Feedback */}
-			<div className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm">
+			{experience?.overallFeedback && <div className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm">
 				<div className="flex justify-between items-center mb-2">
 					<h2 className="text-xl font-bold text-gray-900">
 						Overall Feedback
 					</h2>
 					{experience?.feedbackSentiment?.category && (
 						<span
-							className={`px-3 py-1 text-sm font-medium rounded-full ${
-								experience.feedbackSentiment.category ===
-								"positive"
+							className={`px-3 py-1 text-sm font-medium rounded-full ${experience.feedbackSentiment.category ===
+									"positive"
 									? "bg-green-100 text-green-800"
 									: experience.feedbackSentiment.category ===
-									  "negative"
-									? "bg-red-100 text-red-800"
-									: "bg-gray-100 text-gray-800"
-							}`}
+										"negative"
+										? "bg-red-100 text-red-800"
+										: "bg-gray-100 text-gray-800"
+								}`}
 						>
 							{experience.feedbackSentiment.category
 								.charAt(0)
@@ -808,7 +808,7 @@ const ExperiencePage = () => {
 					)}
 				</div>
 				<p className="text-gray-700">{experience?.overallFeedback}</p>
-			</div>
+			</div>}
 
 			<DeleteConfirmationModal
 				isOpen={showDeleteModal}
@@ -848,14 +848,14 @@ const ExperiencePage = () => {
 									className="bg-gray-50 rounded-lg p-4 border border-gray-200"
 								>
 									<div className="flex items-center mb-3">
-										<div className="flex items-center">
+										<Link to={`/profile/${comment?.user?._id}`} className="flex items-center">
 											<UserAvatar
 												name={comment?.user?.name}
 											/>
 											<span className="font-medium text-gray-900 ml-2">
 												{comment?.user?.name}
 											</span>
-										</div>
+										</Link>
 										<span className="text-xs text-gray-500 ml-auto flex items-center">
 											<Clock size={12} className="mr-1" />
 											{formatCommentDate(

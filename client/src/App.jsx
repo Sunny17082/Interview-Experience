@@ -24,6 +24,7 @@ import ProfilePage from "./Pages/ProfilePage";
 import ForgotPassword from "./Pages/ForgotPassword";
 import ResetPassword from "./Pages/ResetPassword";
 import VerifyEmail from "./Pages/VerifyEmail";
+import ScrollToTop from "./Components/ScrollToTop";
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.withCredentials = true;
@@ -31,6 +32,7 @@ axios.defaults.withCredentials = true;
 function App() {
 	return (
 		<UserContextProvider>
+			<ScrollToTop />
 			<Routes>
 				<Route path="/" element={<Layout />}>
 					<Route index element={<IndexPage />} />
@@ -74,8 +76,14 @@ function App() {
 						path={"/forgotpassword"}
 						element={<ForgotPassword />}
 					/>
-					<Route path={"/resetpassword/:token"} element={<ResetPassword />} />
-					<Route path={"/verifyemail/:token"} element={<VerifyEmail />} />
+					<Route
+						path={"/resetpassword/:token"}
+						element={<ResetPassword />}
+					/>
+					<Route
+						path={"/verifyemail/:token"}
+						element={<VerifyEmail />}
+					/>
 				</Route>
 				<Route path={"/dashboard"} element={<Dashboard />} />
 			</Routes>

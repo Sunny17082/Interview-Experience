@@ -149,6 +149,7 @@ const handleDeleteCompany = async (req, res) => {
 		}
 		return res.status(200).json({
 			success: true,
+			companyDoc,
 			message: "Company deleted successfully",
 		});
 	} catch (err) {

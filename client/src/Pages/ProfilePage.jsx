@@ -803,8 +803,9 @@ const ProfilePage = () => {
 								}`}
 							>
 								<MessageSquare size={16} className="mr-2" />
-								Discussions (
-								{filteredContent.discussions.length})
+								<span className="hidden lg:inline">
+									Discussions ({filteredContent.discussions.length})
+								</span>
 							</button>
 							<button
 								onClick={() => setActiveTab("experiences")}
@@ -815,8 +816,9 @@ const ProfilePage = () => {
 								}`}
 							>
 								<Briefcase size={16} className="mr-2" />
-								Experiences (
-								{filteredContent.experiences.length})
+								<span className="hidden lg:inline">
+									Experiences ({filteredContent.experiences.length})
+								</span>
 							</button>
 							<button
 								onClick={() => setActiveTab("resources")}
@@ -827,7 +829,9 @@ const ProfilePage = () => {
 								}`}
 							>
 								<Book size={16} className="mr-2" />
-								Resources ({filteredContent.resources.length})
+								<span className="hidden lg:inline">
+									Resources ({filteredContent.resources.length})
+								</span>
 							</button>
 						</div>
 

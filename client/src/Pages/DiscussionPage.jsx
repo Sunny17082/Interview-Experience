@@ -329,12 +329,12 @@ const DiscussionPage = () => {
 						>
 							<div className="flex items-center mb-3">
 								{/* Fixed avatar positioning */}
-								<div className="flex items-center">
+								<Link to={`/profile/${comment?.user?._id}`} className="flex items-center">
 									<UserAvatar name={comment?.user?.name} />
 									<span className="font-medium text-gray-900 ml-2">
 										{comment?.user?.name}
 									</span>
-								</div>
+								</Link>
 								<span className="text-xs text-gray-500 ml-auto">
 									{formatDate(comment.createdAt)}
 								</span>
