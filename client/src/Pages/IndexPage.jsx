@@ -79,7 +79,7 @@ const IndexPage = () => {
 					<div className="text-center max-w-3xl mx-auto mb-10">
 						<p className="text-xl text-gray-300 mb-8">
 							Prepare for your next interview with insights from
-							thousands of candidates
+							our candidates
 						</p>
 
 						{/* Search Bar */}

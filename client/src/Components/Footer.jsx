@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
 	return (
@@ -12,36 +13,36 @@ const Footer = () => {
 							</h3>
 							<ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
 								<li>
-									<a
-										href="#"
+									<Link
+										to={"/experience"}
 										className="hover:text-white transition-colors"
 									>
 										Recent Interviews
-									</a>
+									</Link>
 								</li>
 								<li>
-									<a
-										href="#"
+									<Link
+										to={"/companies"}
 										className="hover:text-white transition-colors"
 									>
 										Top Companies
-									</a>
+									</Link>
 								</li>
 								<li>
-									<a
-										href="#"
+									<Link
+										to={"/companies"}
 										className="hover:text-white transition-colors"
 									>
 										Popular Roles
-									</a>
+									</Link>
 								</li>
 								<li>
-									<a
-										href="#"
+									<Link
+										to={"/experience"}
 										className="hover:text-white transition-colors"
 									>
 										Success Stories
-									</a>
+									</Link>
 								</li>
 							</ul>
 						</div>
@@ -51,36 +52,37 @@ const Footer = () => {
 							</h3>
 							<ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
 								<li>
-									<a
-										href="#"
+									<Link
+										to={"/resources"}
 										className="hover:text-white transition-colors"
 									>
 										Interview Prep
-									</a>
+									</Link>
 								</li>
 								<li>
-									<a
+									<Link
+										to={"/companies"}
 										href="#"
 										className="hover:text-white transition-colors"
 									>
 										Salary Data
-									</a>
+									</Link>
 								</li>
 								<li>
-									<a
-										href="#"
+									<Link
+										to={"/discussion"}
 										className="hover:text-white transition-colors"
 									>
 										Career Advice
-									</a>
+									</Link>
 								</li>
 								<li>
-									<a
-										href="#"
+									<Link
+										to={"/companies"}
 										className="hover:text-white transition-colors"
 									>
-										Company Reviews
-									</a>
+										Company
+									</Link>
 								</li>
 							</ul>
 						</div>
