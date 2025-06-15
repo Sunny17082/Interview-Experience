@@ -775,7 +775,7 @@ const ExperiencePage = () => {
 			{experience?.challengesEncountered !== "" && (
 				<div className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm">
 					<h2 className="text-xl font-bold text-gray-900 mb-2">
-						Challenges Encountered
+						Challenges
 					</h2>
 					<p className="text-gray-700">
 						{experience?.challengesEncountered}
